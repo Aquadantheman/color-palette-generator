@@ -1,113 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Color Palette Generator</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{
-      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-      min-height:100vh; padding:20px;
-    }
-    .container{
-      max-width:980px;margin:0 auto;background:rgba(255,255,255,.95);
-      border-radius:20px;padding:30px;box-shadow:0 20px 40px rgba(0,0,0,.1);
-    }
-    h1{ text-align:center;color:#333;margin-bottom:20px;font-size:2.2rem;font-weight:600 }
-    .subtitle{ text-align:center;color:#666;margin-bottom:24px }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Color Palette Generator</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    min-height:100vh; padding:20px;
+  }
+  .container{
+    max-width:980px;margin:0 auto;background:rgba(255,255,255,.95);
+    border-radius:20px;padding:30px;box-shadow:0 20px 40px rgba(0,0,0,.1);
+  }
+  h1{ text-align:center;color:#333;margin-bottom:16px;font-size:2.2rem;font-weight:700 }
+  .subtitle{ text-align:center;color:#666;margin-bottom:18px }
 
-    .mode-selector{ display:flex;justify-content:center;gap:10px;margin-bottom:16px }
-    .mode-btn{
-      background:#f8f9fa;border:2px solid #e9ecef;padding:10px 20px;border-radius:999px;
-      cursor:pointer;transition:all .2s ease;font-weight:600
-    }
-    .mode-btn.active,.mode-btn:hover{ background:#667eea;color:#fff;border-color:#667eea }
-    .mode-btn[aria-pressed="true"]{ background:#667eea;color:#fff;border-color:#667eea }
+  .mode-selector{ display:flex;justify-content:center;gap:10px;margin-bottom:10px }
+  .mode-btn{
+    background:#f8f9fa;border:2px solid #e9ecef;padding:10px 20px;border-radius:999px;
+    cursor:pointer;transition:all .2s ease;font-weight:600
+  }
+  .mode-btn.active,.mode-btn:hover{ background:#667eea;color:#fff;border-color:#667eea }
+  .mode-btn[aria-pressed="true"]{ background:#667eea;color:#fff;border-color:#667eea }
 
-    .toolbar{ display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:10px 0 6px }
-    .control-btn{
-      background:#f8f9fa;border:2px solid #e9ecef;padding:8px 16px;border-radius:999px;
-      cursor:pointer;transition:all .2s ease;font-weight:600
-    }
-    .control-btn:hover{ background:#667eea;color:#fff;border-color:#667eea }
-    .small{ font-size:14px;padding:6px 12px }
+  .toolbar{ display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:10px 0 8px }
+  .control-btn{
+    background:#f8f9fa;border:2px solid #e9ecef;padding:8px 16px;border-radius:999px;
+    cursor:pointer;transition:all .2s ease;font-weight:600
+  }
+  .control-btn:hover{ background:#667eea;color:#fff;border-color:#667eea }
+  .small{ font-size:14px;padding:6px 12px }
 
-    .upload-area{
-      border:3px dashed #ccc;border-radius:15px;padding:36px;text-align:center;margin-bottom:24px;
-      transition:all .2s ease;background:#fafafa
-    }
-    .upload-area:hover{ border-color:#667eea;background:#f0f2ff }
-    .upload-area.dragover{ border-color:#667eea;background:#e8ebff;transform:scale(1.02) }
-    .hidden-input{ position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden }
-    .upload-btn{
-      background:linear-gradient(45deg,#667eea,#764ba2);color:#fff;border:none;
-      padding:12px 24px;border-radius:999px;cursor:pointer;font-size:15px;transition:transform .15s ease
-    }
-    .upload-btn:hover{ transform:translateY(-2px) }
+  .upload-area{
+    border:3px dashed #ccc;border-radius:15px;padding:32px;text-align:center;margin-bottom:18px;
+    transition:all .2s ease;background:#fafafa
+  }
+  .upload-area:hover{ border-color:#667eea;background:#f0f2ff }
+  .upload-area.dragover{ border-color:#667eea;background:#e8ebff;transform:scale(1.02) }
+  .hidden-input{ position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden }
+  .upload-btn{
+    background:linear-gradient(45deg,#667eea,#764ba2);color:#fff;border:none;
+    padding:12px 24px;border-radius:999px;cursor:pointer;font-size:15px;transition:transform .15s ease
+  }
+  .upload-btn:hover{ transform:translateY(-2px) }
 
-    .preview-container{ display:none;margin-bottom:16px }
-    .preview-image{
-      max-width:100%;max-height:320px;border-radius:10px;display:block;margin:0 auto;
-      box-shadow:0 10px 25px rgba(0,0,0,.15)
-    }
+  .preview-container{ display:none;margin-bottom:12px }
+  .preview-image{
+    max-width:100%;max-height:320px;border-radius:12px;display:block;margin:0 auto;
+    box-shadow:0 10px 25px rgba(0,0,0,.15)
+  }
 
-    .palette-container{ display:none }
-    .palette{
-      display:flex;width:100%;height:120px;border-radius:15px;overflow:hidden;
-      box-shadow:0 10px 30px rgba(0,0,0,.2);margin:0 auto 14px
-    }
-    .color-swatch{
-      flex:1;min-width:0;display:flex;align-items:end;justify-content:center;padding:14px 10px;
-      font-weight:700;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:pointer;transition:transform .15s ease;position:relative
-    }
-    .color-swatch:hover{ transform:scale(1.04);z-index:1 }
-    .color-info{text-align:center}
-    .hex-code{ font-size:13px;margin-bottom:2px;letter-spacing:.3px }
-    .rgb-code{ font-size:11px;opacity:.9 }
+  .palette-container{ display:none }
+  .palette{
+    display:flex;width:100%;height:120px;border-radius:15px;overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);margin:0 auto 12px
+  }
+  .color-swatch{
+    flex:1;min-width:0;display:flex;align-items:end;justify-content:center;padding:12px 8px;
+    font-weight:700;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:pointer;transition:transform .15s ease;position:relative
+  }
+  .color-swatch:hover{ transform:scale(1.04);z-index:1 }
+  .color-info{ text-align:center; max-width:100%; overflow:hidden }
+  .hex-code{ font-size:13px;margin-bottom:2px;letter-spacing:.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .rgb-code{ font-size:11px;opacity:.9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
 
-    .anti-palette{ border:3px solid #dc3545;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(220,53,69,.08) 10px,rgba(220,53,69,.08) 20px) }
-    .anti-palette .color-swatch{ border:2px solid rgba(220,53,69,.25) }
-    .anti-palette .color-swatch::before{ content:'⚠️';position:absolute;top:6px;right:6px;font-size:16px }
+  .anti-palette{ border:3px solid #dc3545;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(220,53,69,.08) 10px,rgba(220,53,69,.08) 20px) }
+  .anti-palette .color-swatch{ border:2px solid rgba(220,53,69,.25) }
+  .anti-palette .color-swatch::before{ content:'⚠️';position:absolute;top:6px;right:6px;font-size:16px }
 
-    .grid-2{ display:grid;grid-template-columns:1fr 1fr;gap:20px }
-    @media (max-width:860px){ .grid-2{ grid-template-columns:1fr } }
+  .grid-2{ display:grid;grid-template-columns:1fr 1fr;gap:18px }
+  @media (max-width:860px){ .grid-2{ grid-template-columns:1fr } }
 
-    /* Center the comparison cards nicely */
-    .comparison-wrap{ max-width:940px;margin:0 auto }
-    .compatibility-results{
-      background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%);border-radius:15px;padding:20px;margin:16px auto;text-align:center;
-      max-width:760px
-    }
-    .compatibility-score{ font-size:2.4rem;font-weight:800;margin-bottom:6px }
-    .compatibility-score.excellent{ color:#28a745 }
-    .compatibility-score.good{ color:#ffc107 }
-    .compatibility-score.poor{ color:#dc3545 }
+  /* Centered comparison section */
+  .comparison-wrap{ max-width:940px;margin:0 auto }
+  .compatibility-results{
+    background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%);border-radius:15px;padding:20px;margin:14px auto;text-align:center;
+    max-width:760px
+  }
+  .compatibility-score{ font-size:2.4rem;font-weight:800;margin-bottom:6px }
+  .compatibility-score.excellent{ color:#28a745 }
+  .compatibility-score.good{ color:#ffc107 }
+  .compatibility-score.poor{ color:#dc3545 }
 
-    .compatibility-analysis{
-      display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;justify-items:center
-    }
-    @media (max-width:860px){ .compatibility-analysis{ grid-template-columns:1fr } }
+  /* FLEX instead of grid so both cards center evenly and never "squish" */
+  .compatibility-analysis{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:18px; margin-top:12px;
+  }
+  .palette-card{
+    background:#fff;border-radius:16px;padding:12px 12px 16px;
+    box-shadow:0 10px 25px rgba(0,0,0,.12);
+    width: clamp(320px, 44vw, 560px);
+  }
+  .palette-card h4{ text-align:center;margin-bottom:8px;color:#333 }
 
-    .palette-card{
-      background:#fff;border-radius:14px;padding:12px 12px 16px;
-      box-shadow:0 10px 25px rgba(0,0,0,.12);
-      max-width:520px;width:100%;margin:0 auto
-    }
-    .palette-card h4{ text-align:center;margin-bottom:10px;color:#333 }
+  .row-center{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap }
 
-    .toast{
-      position:fixed;top:18px;right:18px;background:#28a745;color:#fff;padding:12px 18px;border-radius:10px;
-      display:none;z-index:1000;font-weight:700
-    }
-    .loading{ text-align:center;color:#667eea;display:none;margin:6px 0 10px }
-    .spinner{
-      display:inline-block;width:18px;height:18px;border:3px solid #f3f3f3;border-top:3px solid #667eea;border-radius:50%;
-      animation:spin 1s linear infinite;margin-right:8px
-    }
-    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-  </style>
+  .toast{
+    position:fixed;top:18px;right:18px;background:#28a745;color:#fff;padding:12px 18px;border-radius:10px;
+    display:none;z-index:1000;font-weight:700
+  }
+  .loading{ text-align:center;color:#667eea;display:none;margin:6px 0 10px }
+  .spinner{
+    display:inline-block;width:18px;height:18px;border:3px solid #f3f3f3;border-top:3px solid #667eea;border-radius:50%;
+    animation:spin 1s linear infinite;margin-right:8px
+  }
+  @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+</style>
 </head>
 <body>
   <div class="container">
@@ -119,12 +120,11 @@
       <button id="compareModeBtn" class="mode-btn" aria-pressed="false">Compare Images</button>
     </div>
 
-    <!-- Global toolbar -->
     <div class="toolbar">
       <button id="resetBtn" class="control-btn">Reset</button>
     </div>
 
-    <!-- Single Image Mode -->
+    <!-- Single Image -->
     <section id="singleMode">
       <div class="upload-area" id="uploadArea">
         <p style="font-size:16px;color:#555;margin-bottom:12px">Drop an image here or choose a file</p>
@@ -136,11 +136,20 @@
         <img id="imagePreview" class="preview-image" alt="Image preview"/>
       </div>
 
-      <div class="toolbar" id="singleControls" style="display:none">
+      <div class="row-center" id="singleControls" style="display:none">
         <button class="control-btn" data-k="5">5 Colors</button>
         <button class="control-btn" data-k="8">8 Colors</button>
         <button class="control-btn" data-k="10">10 Colors</button>
-        <button class="control-btn" id="antiBtn">⚠️ Anti-Palette</button>
+
+        <!-- Anti palette mode -->
+        <div class="row-center">
+          <button class="control-btn" id="antiBtn">⚠️ Anti-Palette</button>
+          <select id="antiMode" class="control-btn small" title="Anti-palette type">
+            <option value="complement" selected>Complementary clash</option>
+            <option value="lowcontrast">Low-contrast (UI)</option>
+          </select>
+        </div>
+
         <button class="control-btn" id="exportJsonBtn">Export JSON</button>
         <button class="control-btn" id="exportCssBtn">Export CSS Variables</button>
       </div>
@@ -152,15 +161,15 @@
 
         <div id="antiPaletteWrap" style="display:none">
           <h3 style="text-align:center;color:#dc3545;margin:10px 0">🚫 Colors to Avoid</h3>
-          <p style="text-align:center;color:#666;margin-bottom:10px;font-size:13px">
-            These are low-contrast neighbors to your palette (avoid for text/UI on top of your colors).
+          <p id="antiCaption" style="text-align:center;color:#666;margin-bottom:10px;font-size:13px">
+            These are complementary “clash” colors relative to your palette.
           </p>
           <div class="palette anti-palette" id="antiPalette"></div>
         </div>
       </div>
     </section>
 
-    <!-- Compare Images Mode -->
+    <!-- Compare -->
     <section id="compareMode" style="display:none">
       <div class="grid-2 comparison-wrap">
         <div>
@@ -188,7 +197,7 @@
         </div>
       </div>
 
-      <div class="toolbar comparison-wrap" id="compareControls" style="display:none">
+      <div class="row-center comparison-wrap" id="compareControls" style="display:none">
         <label for="compareK" style="align-self:center;font-weight:700">Colors per image:</label>
         <select id="compareK" class="control-btn small" style="cursor:pointer">
           <option value="5" selected>5</option>
@@ -229,440 +238,435 @@
 
   <div class="toast" id="toast">Color copied to clipboard!</div>
 
-  <!-- Hidden canvases for sampling -->
   <canvas id="canvas" style="display:none"></canvas>
   <canvas id="canvas1" style="display:none"></canvas>
   <canvas id="canvas2" style="display:none"></canvas>
 
-  <script>
-    // ---------- State ----------
-    let currentMode='single';
-    let currentImage=null,currentColors=[],currentAntiColors=[];
-    let currentImage1=null,currentImage2=null,currentColors1=[],currentColors2=[];
+<script>
+/* =================== State & Mode =================== */
+let currentMode='single';
+let currentImage=null,currentColors=[],currentAntiColors=[];
+let currentImage1=null,currentImage2=null,currentColors1=[],currentColors2=[];
 
-    // ---------- Mode switch ----------
-    const singleModeBtn=document.getElementById('singleModeBtn');
-    const compareModeBtn=document.getElementById('compareModeBtn');
-    const singleModeEl=document.getElementById('singleMode');
-    const compareModeEl=document.getElementById('compareMode');
-    function switchMode(mode){
-      const isSingle=(mode==='single');
-      currentMode=mode;
-      singleModeEl.style.display=isSingle?'block':'none';
-      compareModeEl.style.display=isSingle?'none':'block';
-      singleModeBtn.classList.toggle('active',isSingle);
-      compareModeBtn.classList.toggle('active',!isSingle);
-      singleModeBtn.setAttribute('aria-pressed',String(isSingle));
-      compareModeBtn.setAttribute('aria-pressed',String(!isSingle));
-    }
-    singleModeBtn.addEventListener('click',()=>switchMode('single'));
-    compareModeBtn.addEventListener('click',()=>switchMode('compare'));
+const singleModeBtn=document.getElementById('singleModeBtn');
+const compareModeBtn=document.getElementById('compareModeBtn');
+const singleModeEl=document.getElementById('singleMode');
+const compareModeEl=document.getElementById('compareMode');
+function switchMode(mode){
+  const isSingle=(mode==='single');
+  currentMode=mode;
+  singleModeEl.style.display=isSingle?'block':'none';
+  compareModeEl.style.display=isSingle?'none':'block';
+  singleModeBtn.classList.toggle('active',isSingle);
+  compareModeBtn.classList.toggle('active',!isSingle);
+  singleModeBtn.setAttribute('aria-pressed',String(isSingle));
+  compareModeBtn.setAttribute('aria-pressed',String(!isSingle));
+}
+singleModeBtn.addEventListener('click',()=>switchMode('single'));
+compareModeBtn.addEventListener('click',()=>switchMode('compare'));
 
-    // ---------- DOM ----------
-    const fileInput=document.getElementById('fileInput');
-    const previewContainer=document.getElementById('previewContainer');
-    const imagePreview=document.getElementById('imagePreview');
-    const loading=document.getElementById('loading');
-    const paletteContainer=document.getElementById('paletteContainer');
-    const paletteEl=document.getElementById('palette');
-    const singleControls=document.getElementById('singleControls');
-    const antiBtn=document.getElementById('antiBtn');
-    const exportJsonBtn=document.getElementById('exportJsonBtn');
-    const exportCssBtn=document.getElementById('exportCssBtn');
-    const antiWrap=document.getElementById('antiPaletteWrap');
-    const antiPaletteEl=document.getElementById('antiPalette');
-    const resetBtn=document.getElementById('resetBtn');
+/* =================== DOM =================== */
+const fileInput=document.getElementById('fileInput');
+const previewContainer=document.getElementById('previewContainer');
+const imagePreview=document.getElementById('imagePreview');
+const loading=document.getElementById('loading');
+const paletteContainer=document.getElementById('paletteContainer');
+const paletteEl=document.getElementById('palette');
+const singleControls=document.getElementById('singleControls');
+const antiBtn=document.getElementById('antiBtn');
+const antiModeSelect=document.getElementById('antiMode');
+const antiCaption=document.getElementById('antiCaption');
+const exportJsonBtn=document.getElementById('exportJsonBtn');
+const exportCssBtn=document.getElementById('exportCssBtn');
+const antiWrap=document.getElementById('antiPaletteWrap');
+const antiPaletteEl=document.getElementById('antiPalette');
+const resetBtn=document.getElementById('resetBtn');
 
-    const fileInput1=document.getElementById('fileInput1');
-    const fileInput2=document.getElementById('fileInput2');
-    const previewContainer1=document.getElementById('previewContainer1');
-    const previewContainer2=document.getElementById('previewContainer2');
-    const imagePreview1=document.getElementById('imagePreview1');
-    const imagePreview2=document.getElementById('imagePreview2');
-    const compareControls=document.getElementById('compareControls');
-    const compareKSelect=document.getElementById('compareK');
-    const analyzeBtn=document.getElementById('analyzeBtn');
-    const loadingCompare=document.getElementById('loadingCompare');
-    const comparisonResults=document.getElementById('comparisonResults');
-    const compatibilityScore=document.getElementById('compatibilityScore');
-    const compatibilityLabel=document.getElementById('compatibilityLabel');
-    const compatibilityDescription=document.getElementById('compatibilityDescription');
-    const palette1=document.getElementById('palette1');
-    const palette2=document.getElementById('palette2');
-    const bridgeBlock=document.getElementById('bridgeBlock');
-    const bridgePalette=document.getElementById('bridgePalette');
+const fileInput1=document.getElementById('fileInput1');
+const fileInput2=document.getElementById('fileInput2');
+const previewContainer1=document.getElementById('previewContainer1');
+const previewContainer2=document.getElementById('previewContainer2');
+const imagePreview1=document.getElementById('imagePreview1');
+const imagePreview2=document.getElementById('imagePreview2');
+const compareControls=document.getElementById('compareControls');
+const compareKSelect=document.getElementById('compareK');
+const analyzeBtn=document.getElementById('analyzeBtn');
+const loadingCompare=document.getElementById('loadingCompare');
+const comparisonResults=document.getElementById('comparisonResults');
+const compatibilityScore=document.getElementById('compatibilityScore');
+const compatibilityLabel=document.getElementById('compatibilityLabel');
+const compatibilityDescription=document.getElementById('compatibilityDescription');
+const palette1=document.getElementById('palette1');
+const palette2=document.getElementById('palette2');
+const bridgeBlock=document.getElementById('bridgeBlock');
+const bridgePalette=document.getElementById('bridgePalette');
 
-    const uploadArea=document.getElementById('uploadArea');
-    const uploadArea1=document.getElementById('uploadArea1');
-    const uploadArea2=document.getElementById('uploadArea2');
+const uploadArea=document.getElementById('uploadArea');
+const uploadArea1=document.getElementById('uploadArea1');
+const uploadArea2=document.getElementById('uploadArea2');
 
-    // ---------- Reset ----------
-    resetBtn.addEventListener('click', resetAll);
-    function resetAll(){
-      // clear single
-      currentImage=null; currentColors=[]; currentAntiColors=[];
-      fileInput.value=''; imagePreview.src=''; previewContainer.style.display='none';
-      paletteEl.innerHTML=''; paletteContainer.style.display='none'; singleControls.style.display='none';
-      antiPaletteEl.innerHTML=''; antiWrap.style.display='none';
+/* =================== Reset =================== */
+resetBtn.addEventListener('click', resetAll);
+function resetAll(){
+  // single
+  currentImage=null; currentColors=[]; currentAntiColors=[];
+  fileInput.value=''; imagePreview.src=''; previewContainer.style.display='none';
+  paletteEl.innerHTML=''; paletteContainer.style.display='none'; singleControls.style.display='none';
+  antiPaletteEl.innerHTML=''; antiWrap.style.display='none';
 
-      // clear compare
-      currentImage1=null; currentImage2=null; currentColors1=[]; currentColors2=[];
-      fileInput1.value=''; fileInput2.value='';
-      imagePreview1.src=''; imagePreview2.src='';
-      previewContainer1.style.display='none'; previewContainer2.style.display='none';
-      compareControls.style.display='none';
-      comparisonResults.style.display='none'; palette1.innerHTML=''; palette2.innerHTML='';
-      bridgePalette.innerHTML=''; bridgeBlock.style.display='none';
+  // compare
+  currentImage1=null; currentImage2=null; currentColors1=[]; currentColors2=[];
+  fileInput1.value=''; fileInput2.value='';
+  imagePreview1.src=''; imagePreview2.src='';
+  previewContainer1.style.display='none'; previewContainer2.style.display='none';
+  compareControls.style.display='none';
+  comparisonResults.style.display='none'; palette1.innerHTML=''; palette2.innerHTML='';
+  bridgePalette.innerHTML=''; bridgeBlock.style.display='none';
 
-      // back to single mode
-      switchMode('single');
-      window.scrollTo({top:0,behavior:'smooth'});
-    }
+  // back to single
+  switchMode('single');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 
-    // ---------- Drag & Drop ----------
-    function wireDrop(zoneEl,onFile){
-      zoneEl.addEventListener('dragover',e=>{e.preventDefault();zoneEl.classList.add('dragover')});
-      zoneEl.addEventListener('dragleave',()=>zoneEl.classList.remove('dragover'));
-      zoneEl.addEventListener('drop',e=>{
-        e.preventDefault();zoneEl.classList.remove('dragover');
-        const f=e.dataTransfer.files?.[0]; if(f&&f.type.startsWith('image/')) onFile(f);
-      });
-    }
-    wireDrop(uploadArea,loadImage);
-    wireDrop(uploadArea1,f=>loadCompareImage(f,1));
-    wireDrop(uploadArea2,f=>loadCompareImage(f,2));
+/* =================== Drag & Drop =================== */
+function wireDrop(zoneEl,onFile){
+  zoneEl.addEventListener('dragover',e=>{e.preventDefault();zoneEl.classList.add('dragover')});
+  zoneEl.addEventListener('dragleave',()=>zoneEl.classList.remove('dragover'));
+  zoneEl.addEventListener('drop',e=>{
+    e.preventDefault();zoneEl.classList.remove('dragover');
+    const f=e.dataTransfer.files?.[0]; if(f&&f.type.startsWith('image/')) onFile(f);
+  });
+}
+wireDrop(uploadArea,loadImage);
+wireDrop(uploadArea1,f=>loadCompareImage(f,1));
+wireDrop(uploadArea2,f=>loadCompareImage(f,2));
 
-    // ---------- File inputs ----------
-    fileInput.addEventListener('change',e=>{
-      const f=e.target.files[0]; if(f&&f.type.startsWith('image/')) loadImage(f);
-    });
-    fileInput1.addEventListener('change',e=>{
-      const f=e.target.files[0]; if(f&&f.type.startsWith('image/')) loadCompareImage(f,1);
-    });
-    fileInput2.addEventListener('change',e=>{
-      const f=e.target.files[0]; if(f&&f.type.startsWith('image/')) loadCompareImage(f,2);
-    });
-
-    function loadImage(file){
-      const reader=new FileReader();
-      reader.onload=ev=>{
-        const img=new Image();
-        img.onload=()=>{
-          currentImage=img;
-          imagePreview.src=ev.target.result;
-          previewContainer.style.display='block';
-          singleControls.style.display='flex';
-          generatePalette(5);
-        };
-        img.src=ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-    function loadCompareImage(file,imageNum){
-      const reader=new FileReader();
-      reader.onload=ev=>{
-        const img=new Image();
-        img.onload=()=>{
-          if(imageNum===1){
-            currentImage1=img; imagePreview1.src=ev.target.result; previewContainer1.style.display='block';
-          }else{
-            currentImage2=img; imagePreview2.src=ev.target.result; previewContainer2.style.display='block';
-          }
-          if(currentImage1&&currentImage2){ compareControls.style.display='flex'; }
-        };
-        img.src=ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // ---------- Controls ----------
-    document.querySelectorAll('#singleControls .control-btn[data-k]').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        const k=parseInt(btn.getAttribute('data-k'),10); generatePalette(k);
-      });
-    });
-    document.getElementById('antiBtn').addEventListener('click',generateAntiPalette);
-    document.getElementById('exportJsonBtn').addEventListener('click',exportPaletteJSON);
-    document.getElementById('exportCssBtn').addEventListener('click',exportCssVariables);
-    analyzeBtn.addEventListener('click',compareImages);
-
-    // ---------- Extraction ----------
-    function extractColors(img,k,canvasId){
-      const canvas=document.getElementById(canvasId);
-      const ctx=canvas.getContext('2d');
-      const maxSize=220;
-      const scale=Math.min(maxSize/img.width,maxSize/img.height);
-      canvas.width=Math.max(1,Math.floor(img.width*scale));
-      canvas.height=Math.max(1,Math.floor(img.height*scale));
-      ctx.drawImage(img,0,0,canvas.width,canvas.height);
-      const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
-      const pixels=[];
-      for(let i=0;i<data.length;i+=16){
-        const r=data[i],g=data[i+1],b=data[i+2],a=data[i+3];
-        if(a>=128)pixels.push([r,g,b]);
-      }
-      return kMeansColorsLab(pixels,k);
-    }
-
-    // K-means++ in Lab
-    function kMeansColorsLab(rgbPixels,k){
-      if(!rgbPixels.length||k<=0)return[];
-      const labs=rgbPixels.map(rgb2lab);
-      const centers=[];
-      centers.push(labs[Math.floor(Math.random()*labs.length)]);
-      while(centers.length<k){
-        const distances=labs.map(p=>Math.min(...centers.map(c=>deltaE76(p,c))));
-        const sum=distances.reduce((a,b)=>a+b,0)||1; let r=Math.random()*sum, idx=0;
-        for(let i=0;i<distances.length;i++){ r-=distances[i]; if(r<=0){idx=i;break} }
-        centers.push(labs[idx]);
-      }
-      for(let iter=0;iter<10;iter++){
-        const clusters=Array.from({length:k},()=>[]);
-        for(const p of labs){
-          let bi=0,bd=1e9;
-          for(let i=0;i<k;i++){ const d=deltaE76(p,centers[i]); if(d<bd){bd=d;bi=i} }
-          clusters[bi].push(p);
-        }
-        for(let i=0;i<k;i++){
-          const c=clusters[i]; if(c.length){
-            centers[i]=[
-              c.reduce((a,p)=>a+p[0],0)/c.length,
-              c.reduce((a,p)=>a+p[1],0)/c.length,
-              c.reduce((a,p)=>a+p[2],0)/c.length
-            ];
-          }
-        }
-      }
-      const colors=centers.map(lab=>{
-        const rgb=lab2rgb(lab); return {rgb,hex:rgbToHex(rgb[0],rgb[1],rgb[2])};
-      });
-      colors.sort((A,B)=>{
-        const [ha,sa,va]=rgbToHsv(A.rgb),[hb,sb,vb]=rgbToHsv(B.rgb);
-        return ha-hb||sb-sa||vb-va;
-      });
-      return colors;
-    }
-
-    // ---------- Render ----------
-    function generatePalette(k){
-      if(!currentImage)return;
-      loading.style.display='block';
-      setTimeout(()=>{
-        currentColors=extractColors(currentImage,k,'canvas');
-        displayPalette(currentColors);
-        paletteContainer.style.display='block';
-        antiWrap.style.display='none';
-        loading.style.display='none';
-      },30);
-    }
-    function displayPalette(colors){
-      paletteEl.innerHTML='';
-      for(const color of colors){
-        const sw=document.createElement('div');
-        sw.className='color-swatch'; sw.style.backgroundColor=color.hex;
-        const tc=textColorFor(color.rgb);
-        sw.style.color=tc; sw.style.textShadow=tc==='#000'?'none':'1px 1px 2px rgba(0,0,0,.5)';
-        sw.title='Click to copy '+color.hex.toUpperCase();
-        sw.addEventListener('click',()=>copyToClipboard(color.hex));
-        sw.innerHTML=`<div class="color-info"><div class="hex-code">${color.hex.toUpperCase()}</div>
-          <div class="rgb-code">RGB(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})</div></div>`;
-        paletteEl.appendChild(sw);
-      }
-    }
-    function displayPaletteIn(container,colors){
-      container.innerHTML='';
-      for(const color of colors){
-        const sw=document.createElement('div');
-        sw.className='color-swatch'; sw.style.backgroundColor=color.hex;
-        const tc=textColorFor(color.rgb);
-        sw.style.color=tc; sw.style.textShadow=tc==='#000'?'none':'1px 1px 2px rgba(0,0,0,.5)';
-        sw.addEventListener('click',()=>copyToClipboard(color.hex));
-        sw.innerHTML=`<div class="color-info"><div class="hex-code">${color.hex.toUpperCase()}</div>
-          <div class="rgb-code">RGB(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})</div></div>`;
-        container.appendChild(sw);
-      }
-    }
-
-    // ---------- Anti-palette (guaranteed different) ----------
-    function calculateAntiColors(mainColors){
-      // we want very similar lightness (low contrast), but not identical values.
-      const out=[];
-      for(const c of mainColors){
-        const lab=rgb2lab(c.rgb);
-        const L = lab[0];
-        // keep L within ±3 to stay low-contrast; slightly desaturate toward gray
-        let candidate=[ clamp(L + (L>50?-3:3),0,100), lab[1]*0.88, lab[2]*0.88 ];
-        let rgb=lab2rgb(candidate);
-        let hex=rgbToHex(rgb[0],rgb[1],rgb[2]).toUpperCase();
-        const mainHex=c.hex.toUpperCase();
-
-        // if rounding created the same hex, push it further (±8 L* and more desat)
-        if(hex===mainHex){
-          candidate=[ clamp(L + (L>50?-8:8),0,100), lab[1]*0.8, lab[2]*0.8 ];
-          rgb=lab2rgb(candidate);
-          hex=rgbToHex(rgb[0],rgb[1],rgb[2]).toUpperCase();
-        }
-        // last resort: nudge channels to ensure difference
-        if(hex===mainHex){
-          rgb=[ clamp8(rgb[0]+(rgb[0]>127?-12:12)),
-                clamp8(rgb[1]+(rgb[1]>127?-12:12)),
-                clamp8(rgb[2]+(rgb[2]>127?-12:12)) ];
-          hex=rgbToHex(rgb[0],rgb[1],rgb[2]).toUpperCase();
-        }
-        out.push({ rgb, hex, reason:'Low contrast with main palette' });
-      }
-      return out;
-    }
-    function generateAntiPalette(){
-      if(!currentColors.length)return;
-      currentAntiColors=calculateAntiColors(currentColors);
-      displayPaletteIn(antiPaletteEl,currentAntiColors);
-      antiWrap.style.display='block';
-    }
-
-    // ---------- Compare ----------
-    function compareImages(){
-      if(!currentImage1||!currentImage2){ alert('Please upload both images first.'); return; }
-      const k=parseInt(compareKSelect.value,10)||5;
-      loadingCompare.style.display='block';
-      setTimeout(()=>{
-        currentColors1=extractColors(currentImage1,k,'canvas1');
-        currentColors2=extractColors(currentImage2,k,'canvas2');
-        const analysis=analyzeCompatibility(currentColors1,currentColors2);
-        showComparison(analysis);
-        loadingCompare.style.display='none';
-      },30);
-    }
-    function showComparison(analysis){
-      comparisonResults.style.display='block';
-      displayPaletteIn(palette1,currentColors1);
-      displayPaletteIn(palette2,currentColors2);
-      compatibilityScore.textContent=`${analysis.score}%`;
-      compatibilityScore.className='compatibility-score ' + (analysis.score>=80?'excellent':analysis.score>=60?'good':'poor');
-      compatibilityLabel.textContent=analysis.label;
-      compatibilityDescription.textContent=analysis.description;
-      if(analysis.bridgeColors?.length){
-        bridgeBlock.style.display='block';
-        displayPaletteIn(bridgePalette,analysis.bridgeColors);
+/* =================== File inputs =================== */
+fileInput.addEventListener('change',e=>{
+  const f=e.target.files[0]; if(f&&f.type.startsWith('image/')) loadImage(f);
+});
+fileInput1.addEventListener('change',e=>{
+  const f=e.target.files[0]; if(f&&f.type.startsWith('image/')) loadCompareImage(f,1);
+});
+fileInput2.addEventListener('change',e=>{
+  const f=e.target.files[0]; if(f&&f.type.startsWith('image/')) loadCompareImage(f,2);
+});
+function loadImage(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      currentImage=img;
+      imagePreview.src=ev.target.result;
+      previewContainer.style.display='block';
+      singleControls.style.display='flex';
+      generatePalette(5);
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function loadCompareImage(file,imageNum){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      if(imageNum===1){
+        currentImage1=img; imagePreview1.src=ev.target.result; previewContainer1.style.display='block';
       }else{
-        bridgeBlock.style.display='none';
+        currentImage2=img; imagePreview2.src=ev.target.result; previewContainer2.style.display='block';
+      }
+      if(currentImage1&&currentImage2){ compareControls.style.display='flex'; }
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* =================== Controls =================== */
+document.querySelectorAll('#singleControls .control-btn[data-k]').forEach(btn=>{
+  btn.addEventListener('click',()=>generatePalette(parseInt(btn.getAttribute('data-k'),10)));
+});
+antiBtn.addEventListener('click', ()=> generateAntiPalette());
+exportJsonBtn.addEventListener('click', exportPaletteJSON);
+exportCssBtn.addEventListener('click', exportCssVariables);
+analyzeBtn.addEventListener('click', compareImages);
+
+/* =================== Extraction (k-means++ in Lab) =================== */
+function extractColors(img,k,canvasId){
+  const canvas=document.getElementById(canvasId);
+  const ctx=canvas.getContext('2d');
+  const maxSize=220;
+  const scale=Math.min(maxSize/img.width,maxSize/img.height);
+  canvas.width=Math.max(1,Math.floor(img.width*scale));
+  canvas.height=Math.max(1,Math.floor(img.height*scale));
+  ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+  const pixels=[];
+  for(let i=0;i<data.length;i+=16){
+    const r=data[i],g=data[i+1],b=data[i+2],a=data[i+3];
+    if(a>=128)pixels.push([r,g,b]);
+  }
+  return kMeansColorsLab(pixels,k);
+}
+function kMeansColorsLab(rgbPixels,k){
+  if(!rgbPixels.length||k<=0)return[];
+  const labs=rgbPixels.map(rgb2lab);
+  const centers=[ labs[Math.floor(Math.random()*labs.length)] ];
+  while(centers.length<k){
+    const distances=labs.map(p=>Math.min(...centers.map(c=>deltaE76(p,c))));
+    const sum=distances.reduce((a,b)=>a+b,0)||1; let r=Math.random()*sum, idx=0;
+    for(let i=0;i<distances.length;i++){ r-=distances[i]; if(r<=0){idx=i;break} }
+    centers.push(labs[idx]);
+  }
+  for(let iter=0;iter<10;iter++){
+    const clusters=Array.from({length:k},()=>[]);
+    for(const p of labs){
+      let bi=0,bd=1e9;
+      for(let i=0;i<k;i++){ const d=deltaE76(p,centers[i]); if(d<bd){bd=d;bi=i} }
+      clusters[bi].push(p);
+    }
+    for(let i=0;i<k;i++){
+      const c=clusters[i]; if(c.length){
+        centers[i]=[
+          c.reduce((a,p)=>a+p[0],0)/c.length,
+          c.reduce((a,p)=>a+p[1],0)/c.length,
+          c.reduce((a,p)=>a+p[2],0)/c.length
+        ];
       }
     }
+  }
+  const colors=centers.map(lab=>{
+    const rgb=lab2rgb(lab); return {rgb,hex:rgbToHex(rgb[0],rgb[1],rgb[2])};
+  });
+  colors.sort((A,B)=>{
+    const [ha,sa,va]=rgbToHsv(A.rgb),[hb,sb,vb]=rgbToHsv(B.rgb);
+    return ha-hb||sb-sa||vb-va;
+  });
+  return colors;
+}
 
-    // ---------- Export ----------
-    function exportPaletteJSON(){
-      if(!currentColors.length)return;
-      const data={
-        mainColors: currentColors.map(c=>({hex:c.hex,rgb:c.rgb})),
-        antiColors: currentAntiColors.map(c=>({hex:c.hex,rgb:c.rgb,reason:c.reason})),
-        timestamp: new Date().toISOString(),
-        mainColorCount: currentColors.length,
-        antiColorCount: currentAntiColors.length
-      };
-      const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-      const url=URL.createObjectURL(blob);
-      const a=Object.assign(document.createElement('a'),{href:url,download:`color-palette-${Date.now()}.json`});
-      a.click(); URL.revokeObjectURL(url);
-    }
-    function exportCssVariables(){
-      if(!currentColors.length)return;
-      const lines=currentColors.map((c,i)=>`  --palette-${i+1}: ${c.hex};`).join('\n');
-      const css=`:root{\n${lines}\n}\n`;
-      const blob=new Blob([css],{type:'text/css'});
-      const url=URL.createObjectURL(blob);
-      const a=Object.assign(document.createElement('a'),{href:url,download:`palette-${Date.now()}.css`});
-      a.click(); URL.revokeObjectURL(url);
-    }
+/* =================== Render =================== */
+function generatePalette(k){
+  if(!currentImage)return;
+  loading.style.display='block';
+  setTimeout(()=>{
+    currentColors=extractColors(currentImage,k,'canvas');
+    displayPalette(paletteEl,currentColors);
+    paletteContainer.style.display='block';
+    antiWrap.style.display='none';
+    loading.style.display='none';
+  },30);
+}
+function displayPalette(container,colors){
+  container.innerHTML='';
+  for(const color of colors){
+    const sw=document.createElement('div');
+    sw.className='color-swatch'; sw.style.backgroundColor=color.hex;
+    const tc=textColorFor(color.rgb);
+    sw.style.color=tc; sw.style.textShadow=tc==='#000'?'none':'1px 1px 2px rgba(0,0,0,.5)';
+    sw.title='Click to copy '+color.hex.toUpperCase();
+    sw.addEventListener('click',()=>copyToClipboard(color.hex));
+    sw.innerHTML=`<div class="color-info"><div class="hex-code">${color.hex.toUpperCase()}</div>
+      <div class="rgb-code">RGB(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})</div></div>`;
+    container.appendChild(sw);
+  }
+}
 
-    // ---------- Clipboard & toast ----------
-    function copyToClipboard(text){
-      if(navigator.clipboard&&window.isSecureContext){
-        navigator.clipboard.writeText(text).then(showToast);
-      }else{
-        const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
-        document.body.appendChild(ta); ta.focus(); ta.select();
-        try{ document.execCommand('copy'); showToast(); } finally{ document.body.removeChild(ta); }
-      }
-    }
-    function showToast(){
-      const toast=document.getElementById('toast'); toast.style.display='block';
-      setTimeout(()=>{ toast.style.display='none'; },1700);
-    }
+/* =================== Anti-palette =================== */
+function generateAntiPalette(){
+  if(!currentColors.length)return;
+  const mode=antiModeSelect.value;
+  if(mode==='lowcontrast'){
+    antiCaption.textContent='These are low-contrast neighbors to your palette (avoid for text/UI on top of your colors).';
+    currentAntiColors = calculateLowContrastAvoid(currentColors);
+  }else{
+    antiCaption.textContent='These are complementary “clash” colors relative to your palette.';
+    currentAntiColors = calculateComplementaryAvoid(currentColors);
+  }
+  displayPalette(antiPaletteEl,currentAntiColors);
+  antiWrap.style.display='block';
+}
 
-    // ---------- Color helpers ----------
-    function rgbToHex(r,g,b){ return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1) }
-    function clamp(v,min,max){ return Math.max(min,Math.min(max,v)) }
-    function clamp8(v){ return Math.max(0,Math.min(255,Math.round(v))) }
+// (A) complementary clash (Lab complement: keep L*, flip a*,b*)
+function calculateComplementaryAvoid(mainColors){
+  const out=[];
+  for(const c of mainColors){
+    const lab=rgb2lab(c.rgb);
+    let comp=[ lab[0], -lab[1], -lab[2] ];
+    // small saturation push so it’s not muddy
+    comp=[ comp[0], comp[1]*1.05, comp[2]*1.05 ];
+    let rgb=lab2rgb(comp);
+    // ensure visibly different from original
+    if (deltaE76(rgb2lab(rgb), lab) < 5){
+      comp=[ comp[0], comp[1]*1.2, comp[2]*1.2 ];
+      rgb=lab2rgb(comp);
+    }
+    out.push({ rgb, hex: rgbToHex(rgb[0],rgb[1],rgb[2]), reason:'Complementary clash' });
+  }
+  return out;
+}
 
-    function rgbToHsv([r,g,b]){
-      r/=255; g/=255; b/=255;
-      const max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
-      let h=d===0?0:max===r?((g-b)/d)%6:max===g?(b-r)/d+2:(r-g)/d+4;
-      h=Math.round((h<0?h+6:h)*60); const s=max===0?0:d/max; const v=max;
-      return [h,s,v];
+// (B) low-contrast neighbors (for UI)
+function calculateLowContrastAvoid(mainColors){
+  const out=[];
+  for(const c of mainColors){
+    const lab=rgb2lab(c.rgb);
+    const L=lab[0];
+    let candidate=[ clamp(L + (L>50?-3:3),0,100), lab[1]*0.88, lab[2]*0.88 ];
+    let rgb=lab2rgb(candidate);
+    let hex=rgbToHex(rgb[0],rgb[1],rgb[2]).toUpperCase();
+    const mainHex=c.hex.toUpperCase();
+    if(hex===mainHex){
+      candidate=[ clamp(L + (L>50?-8:8),0,100), lab[1]*0.8, lab[2]*0.8 ];
+      rgb=lab2rgb(candidate); hex=rgbToHex(rgb[0],rgb[1],rgb[2]).toUpperCase();
     }
-    function textColorFor(rgb){
-      const [r,g,b]=rgb.map(v=>v/255);
-      const lin=[r,g,b].map(c=>c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4));
-      const L=0.2126*lin[0]+0.7152*lin[1]+0.0722*lin[2];
-      return L>0.179?'#000':'#fff';
+    if(hex===mainHex){
+      rgb=[ clamp8(rgb[0]+(rgb[0]>127?-12:12)),
+            clamp8(rgb[1]+(rgb[1]>127?-12:12)),
+            clamp8(rgb[2]+(rgb[2]>127?-12:12)) ];
+      hex=rgbToHex(rgb[0],rgb[1],rgb[2]).toUpperCase();
     }
+    out.push({ rgb, hex, reason:'Low contrast with main palette' });
+  }
+  return out;
+}
 
-    // sRGB -> XYZ -> Lab (D65)
-    function rgb2xyz([r,g,b]){
-      r/=255; g/=255; b/=255;
-      [r,g,b]=[r,g,b].map(c=>c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4));
-      return [0.4124*r+0.3576*g+0.1805*b, 0.2126*r+0.7152*g+0.0722*b, 0.0193*r+0.1192*g+0.9505*b];
-    }
-    function xyz2lab([x,y,z]){
-      const xr=x/0.95047, yr=y/1.00000, zr=z/1.08883;
-      const f=t=>t>0.008856?Math.cbrt(t):(7.787*t)+(16/116);
-      const fx=f(xr), fy=f(yr), fz=f(zr);
-      return [116*fy-16, 500*(fx-fy), 200*(fy-fz)];
-    }
-    function rgb2lab(rgb){ return xyz2lab(rgb2xyz(rgb)) }
-    function lab2rgb([L,a,b]){
-      const fy=(L+16)/116, fx=fy+a/500, fz=fy-b/200;
-      const fInv=t=>{ const t3=t*t*t; return t3>0.008856?t3:(t-16/116)/7.787 };
-      const xr=fInv(fx), yr=fInv(fy), zr=fInv(fz);
-      let x=0.95047*xr,y=1.00000*yr,z=1.08883*zr;
-      let r= 3.2406*x + -1.5372*y + -0.4986*z;
-      let g=-0.9689*x +  1.8758*y +  0.0415*z;
-      let b2=0.0557*x + -0.2040*y +  1.0570*z;
-      const comp=c=>{ c=Math.max(0,Math.min(1,c)); return Math.round(255*(c<=0.0031308?12.92*c:1.055*Math.pow(c,1/2.4)-0.055)) }
-      return [comp(r),comp(g),comp(b2)];
-    }
-    function deltaE76(l1,l2){
-      const dL=l1[0]-l2[0], da=l1[1]-l2[1], db=l1[2]-l2[2];
-      return Math.sqrt(dL*dL+da*da+db*db);
-    }
+/* =================== Compare =================== */
+function compareImages(){
+  if(!currentImage1||!currentImage2){ alert('Please upload both images first.'); return; }
+  const k=parseInt(compareKSelect.value,10)||5;
+  loadingCompare.style.display='block';
+  setTimeout(()=>{
+    currentColors1=extractColors(currentImage1,k,'canvas1');
+    currentColors2=extractColors(currentImage2,k,'canvas2');
+    const analysis=analyzeCompatibility(currentColors1,currentColors2);
+    showComparison(analysis);
+    loadingCompare.style.display='none';
+  },30);
+}
+function showComparison(analysis){
+  comparisonResults.style.display='block';
+  displayPalette(palette1,currentColors1);
+  displayPalette(palette2,currentColors2);
+  compatibilityScore.textContent=`${analysis.score}%`;
+  compatibilityScore.className='compatibility-score ' + (analysis.score>=80?'excellent':analysis.score>=60?'good':'poor');
+  compatibilityLabel.textContent=analysis.label;
+  compatibilityDescription.textContent=analysis.description;
+  if(analysis.bridgeColors?.length){
+    bridgeBlock.style.display='block';
+    displayPalette(bridgePalette,analysis.bridgeColors);
+  }else{
+    bridgeBlock.style.display='none';
+  }
+}
 
-    // ---------- Compatibility ----------
-    function paletteDistance(p1,p2){
-      const labs1=p1.map(c=>rgb2lab(c.rgb)), labs2=p2.map(c=>rgb2lab(c.rgb));
-      const meanNN=(A,B)=>A.reduce((acc,a)=>{
-        let best=1e9; for(const b of B){ const d=deltaE76(a,b); if(d<best) best=d } return acc+best;
-      },0)/A.length;
-      return (meanNN(labs1,labs2)+meanNN(labs2,labs1))/2;
-    }
-    function analyzeCompatibility(p1,p2){
-      const d=paletteDistance(p1,p2);
-      const score=Math.max(0,Math.min(100,Math.round(100-d)));
-      const label=score>=80?'Excellent Match!':score>=60?'Good Harmony':'Decent Pairing';
-      const description=score>=80?'These palettes are naturally complementary.'
-        :score>=60?'These work well together; consider bridge colors.':'There’s some tension—use bridge colors or adjust saturation/lightness.';
-      const labs1=p1.map(c=>rgb2lab(c.rgb)), labs2=p2.map(c=>rgb2lab(c.rgb));
-      const bridges=[];
-      for(let i=0;i<Math.min(p1.length,p2.length);i++){
-        const a=labs1[i%labs1.length];
-        let bestIdx=0,best=1e9;
-        for(let j=0;j<labs2.length;j++){ const dij=deltaE76(a,labs2[j]); if(dij<best){best=dij;bestIdx=j} }
-        const mid=[(a[0]+labs2[bestIdx][0])/2,(a[1]+labs2[bestIdx][1])/2,(a[2]+labs2[bestIdx][2])/2];
-        const rgb=lab2rgb(mid); bridges.push({rgb,hex:rgbToHex(rgb[0],rgb[1],rgb[2])});
-      }
-      const seen=new Set(),uniq=[]; for(const c of bridges){ if(!seen.has(c.hex)){ seen.add(c.hex); uniq.push(c) } }
-      return { score,label,description,bridgeColors:uniq.slice(0,5) };
-    }
-  </script>
+/* =================== Export / Clipboard =================== */
+function exportPaletteJSON(){
+  if(!currentColors.length)return;
+  const data={
+    mainColors: currentColors.map(c=>({hex:c.hex,rgb:c.rgb})),
+    antiColors: currentAntiColors.map(c=>({hex:c.hex,rgb:c.rgb,reason:c.reason})),
+    timestamp: new Date().toISOString(),
+    mainColorCount: currentColors.length,
+    antiColorCount: currentAntiColors.length
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=Object.assign(document.createElement('a'),{href:url,download:`color-palette-${Date.now()}.json`});
+  a.click(); URL.revokeObjectURL(url);
+}
+function exportCssVariables(){
+  if(!currentColors.length)return;
+  const lines=currentColors.map((c,i)=>`  --palette-${i+1}: ${c.hex};`).join('\n');
+  const css=`:root{\n${lines}\n}\n`;
+  const blob=new Blob([css],{type:'text/css'});
+  const url=URL.createObjectURL(blob);
+  const a=Object.assign(document.createElement('a'),{href:url,download:`palette-${Date.now()}.css`});
+  a.click(); URL.revokeObjectURL(url);
+}
+function copyToClipboard(text){
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(showToast);
+  }else{
+    const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try{ document.execCommand('copy'); showToast(); } finally{ document.body.removeChild(ta); }
+  }
+}
+function showToast(){
+  const toast=document.getElementById('toast'); toast.style.display='block';
+  setTimeout(()=>{ toast.style.display='none'; },1700);
+}
+
+/* =================== Color helpers =================== */
+function rgbToHex(r,g,b){ return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1) }
+function clamp(v,min,max){ return Math.max(min,Math.min(max,v)) }
+function clamp8(v){ return Math.max(0,Math.min(255,Math.round(v))) }
+function rgbToHsv([r,g,b]){
+  r/=255; g/=255; b/=255; const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+  let h=d===0?0:max===r?((g-b)/d)%6:max===g?(b-r)/d+2:(r-g)/d+4;
+  h=Math.round((h<0?h+6:h)*60); const s=max===0?0:d/max; const v=max; return [h,s,v];
+}
+function textColorFor(rgb){
+  const [r,g,b]=rgb.map(v=>v/255);
+  const lin=[r,g,b].map(c=>c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4));
+  const L=0.2126*lin[0]+0.7152*lin[1]+0.0722*lin[2]; return L>0.179?'#000':'#fff';
+}
+// sRGB -> XYZ -> Lab (D65)
+function rgb2xyz([r,g,b]){
+  r/=255; g/=255; b/=255;
+  [r,g,b]=[r,g,b].map(c=>c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4));
+  return [0.4124*r+0.3576*g+0.1805*b, 0.2126*r+0.7152*g+0.0722*b, 0.0193*r+0.1192*g+0.9505*b];
+}
+function xyz2lab([x,y,z]){
+  const xr=x/0.95047, yr=y/1.00000, zr=z/1.08883;
+  const f=t=>t>0.008856?Math.cbrt(t):(7.787*t)+(16/116);
+  const fx=f(xr), fy=f(yr), fz=f(zr);
+  return [116*fy-16, 500*(fx-fy), 200*(fy-fz)];
+}
+function rgb2lab(rgb){ return xyz2lab(rgb2xyz(rgb)) }
+function lab2rgb([L,a,b]){
+  const fy=(L+16)/116, fx=fy+a/500, fz=fy-b/200;
+  const fInv=t=>{ const t3=t*t*t; return t3>0.008856?t3:(t-16/116)/7.787 };
+  const xr=fInv(fx), yr=fInv(fy), zr=fInv(fz);
+  let x=0.95047*xr,y=1.00000*yr,z=1.08883*zr;
+  let r= 3.2406*x + -1.5372*y + -0.4986*z;
+  let g=-0.9689*x +  1.8758*y +  0.0415*z;
+  let b2=0.0557*x + -0.2040*y +  1.0570*z;
+  const comp=c=>{ c=Math.max(0,Math.min(1,c)); return Math.round(255*(c<=0.0031308?12.92*c:1.055*Math.pow(c,1/2.4)-0.055)) }
+  return [comp(r),comp(g),comp(b2)];
+}
+function deltaE76(l1,l2){
+  const dL=l1[0]-l2[0], da=l1[1]-l2[1], db=l1[2]-l2[2];
+  return Math.sqrt(dL*dL+da*da+db*db);
+}
+
+/* =================== Compatibility =================== */
+function paletteDistance(p1,p2){
+  const labs1=p1.map(c=>rgb2lab(c.rgb)), labs2=p2.map(c=>rgb2lab(c.rgb));
+  const meanNN=(A,B)=>A.reduce((acc,a)=>{
+    let best=1e9; for(const b of B){ const d=deltaE76(a,b); if(d<best) best=d } return acc+best;
+  },0)/A.length;
+  return (meanNN(labs1,labs2)+meanNN(labs2,labs1))/2;
+}
+function analyzeCompatibility(p1,p2){
+  const d=paletteDistance(p1,p2);
+  const score=Math.max(0,Math.min(100,Math.round(100-d)));
+  const label=score>=80?'Excellent Match!':score>=60?'Good Harmony':'Decent Pairing';
+  const description=score>=80?'These palettes are naturally complementary.'
+    :score>=60?'These work well together; consider bridge colors.':'There’s some tension—use bridge colors or adjust saturation/lightness.';
+  const labs1=p1.map(c=>rgb2lab(c.rgb)), labs2=p2.map(c=>rgb2lab(c.rgb));
+  const bridges=[];
+  for(let i=0;i<Math.min(p1.length,p2.length);i++){
+    const a=labs1[i%labs1.length]; let bestIdx=0,best=1e9;
+    for(let j=0;j<labs2.length;j++){ const dij=deltaE76(a,labs2[j]); if(dij<best){best=dij;bestIdx=j} }
+    const mid=[(a[0]+labs2[bestIdx][0])/2,(a[1]+labs2[bestIdx][1])/2,(a[2]+labs2[bestIdx][2])/2];
+    const rgb=lab2rgb(mid); bridges.push({rgb,hex:rgbToHex(rgb[0],rgb[1],rgb[2])});
+  }
+  const seen=new Set(),uniq=[]; for(const c of bridges){ if(!seen.has(c.hex)){ seen.add(c.hex); uniq.push(c) } }
+  return { score,label,description,bridgeColors:uniq.slice(0,5) };
+}
+</script>
 </body>
 </html>
