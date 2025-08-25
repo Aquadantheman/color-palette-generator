@@ -474,38 +474,57 @@ function displayPalette(container,colors){
 }
 
 /* =================== Anti-palette =================== */
+// default selected in the HTML <select id="antiMode"> should be "complement"
+// When rendering:
 function generateAntiPalette(){
-  if(!currentColors.length)return;
-  const mode=antiModeSelect.value;
-  if(mode==='lowcontrast'){
-    antiCaption.textContent='These are low-contrast neighbors to your palette (avoid for text/UI on top of your colors).';
+  if (!currentColors.length) return;
+  const mode = antiModeSelect.value;  // 'complement' or 'lowcontrast'
+  if (mode === 'lowcontrast'){
+    antiCaption.textContent = 'These are low-contrast neighbors to your palette (avoid for text/UI on top of your colors).';
     currentAntiColors = calculateLowContrastAvoid(currentColors);
-  }else{
-    antiCaption.textContent='These are complementary “clash” colors relative to your palette.';
+  } else {
+    antiCaption.textContent = 'These are complementary “clash” colors relative to your palette.';
     currentAntiColors = calculateComplementaryAvoid(currentColors);
   }
-  displayPalette(antiPaletteEl,currentAntiColors);
-  antiWrap.style.display='block';
+  displayPalette(antiPaletteEl, currentAntiColors);
+  antiWrap.style.display = 'block';
 }
 
-// (A) complementary clash (Lab complement: keep L*, flip a*,b*)
+
+// Strong, visually distinct complements (ΔE guard)
 function calculateComplementaryAvoid(mainColors){
-  const out=[];
-  for(const c of mainColors){
-    const lab=rgb2lab(c.rgb);
-    let comp=[ lab[0], -lab[1], -lab[2] ];
-    // small saturation push so it’s not muddy
-    comp=[ comp[0], comp[1]*1.05, comp[2]*1.05 ];
-    let rgb=lab2rgb(comp);
-    // ensure visibly different from original
-    if (deltaE76(rgb2lab(rgb), lab) < 5){
-      comp=[ comp[0], comp[1]*1.2, comp[2]*1.2 ];
-      rgb=lab2rgb(comp);
+  const MIN_DE = 35;          // how different it must look (0..100)
+  const L_STEP = 6;           // lightness nudge per attempt
+  const SAT_SCALE = 1.2;      // chroma push per attempt
+
+  const out = [];
+  for (const c of mainColors){
+    const lab0 = rgb2lab(c.rgb);
+
+    // Start with a true complement in Lab: flip a*, b*, and mirror lightness around 50
+    let comp = [ 100 - lab0[0], -lab0[1], -lab0[2] ];
+
+    // If it’s still too close, push it away iteratively
+    let tries = 0;
+    while (deltaE76(lab0, comp) < MIN_DE && tries < 8){
+      comp = [
+        clamp(comp[0] + (comp[0] > 50 ? L_STEP : -L_STEP), 0, 100),
+        comp[1] * SAT_SCALE,
+        comp[2] * SAT_SCALE
+      ];
+      tries++;
     }
-    out.push({ rgb, hex: rgbToHex(rgb[0],rgb[1],rgb[2]), reason:'Complementary clash' });
+
+    const rgb = lab2rgb(comp);
+    out.push({
+      rgb,
+      hex: rgbToHex(rgb[0], rgb[1], rgb[2]),
+      reason: 'Complementary clash'
+    });
   }
   return out;
 }
+
 
 // (B) low-contrast neighbors (for UI)
 function calculateLowContrastAvoid(mainColors){
