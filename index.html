@@ -1,633 +1,746 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Color Palette Generator</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Color Palette Generator</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height:100vh; padding:20px;
+    }
+    .container {
+      max-width: 980px; margin: 0 auto; background: rgba(255,255,255,.95);
+      border-radius: 20px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,.1);
+    }
+    h1 { text-align:center; color:#333; margin-bottom: 20px; font-size:2.2rem; font-weight: 600; }
+    .subtitle { text-align:center; color:#666; margin-bottom: 24px; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+    .mode-selector { display:flex; justify-content:center; gap:10px; margin-bottom: 24px; }
+    .mode-btn {
+      background:#f8f9fa; border:2px solid #e9ecef; padding:10px 20px; border-radius: 999px;
+      cursor:pointer; transition: all .2s ease; font-weight:600;
+    }
+    .mode-btn.active, .mode-btn:hover { background:#667eea; color:white; border-color:#667eea; }
+    .mode-btn[aria-pressed="true"] { background:#667eea; color:#fff; border-color:#667eea; }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
+    .upload-area {
+      border: 3px dashed #ccc; border-radius: 15px; padding: 36px; text-align:center; margin-bottom: 24px;
+      transition: all .2s ease; background:#fafafa;
+    }
+    .upload-area:hover { border-color:#667eea; background:#f0f2ff; }
+    .upload-area.dragover { border-color:#667eea; background:#e8ebff; transform: scale(1.02); }
+    .hidden-input { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
 
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2.5rem;
-            font-weight: 300;
-        }
+    .upload-btn {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white; border: none; padding: 12px 24px; border-radius: 999px; cursor:pointer; font-size: 15px;
+      transition: transform .15s ease;
+    }
+    .upload-btn:hover { transform: translateY(-2px); }
 
-        .upload-area {
-            border: 3px dashed #ccc;
-            border-radius: 15px;
-            padding: 40px;
-            text-align: center;
-            margin-bottom: 30px;
-            transition: all 0.3s ease;
-            background: #fafafa;
-        }
+    .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 860px){ .grid-2 { grid-template-columns: 1fr; } }
 
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #f0f2ff;
-        }
+    .preview-container { display:none; margin-bottom: 20px; }
+    .preview-image {
+      max-width:100%; max-height:320px; border-radius: 10px; display:block; margin: 0 auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,.15);
+    }
 
-        .upload-area.dragover {
-            border-color: #667eea;
-            background: #e8ebff;
-            transform: scale(1.02);
-        }
+    .controls { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin: 18px 0 10px; }
+    .control-btn {
+      background:#f8f9fa; border:2px solid #e9ecef; padding:8px 16px; border-radius: 999px; cursor:pointer; transition: all .2s ease;
+      font-weight:600;
+    }
+    .control-btn:hover { background:#667eea; color:white; border-color:#667eea; }
+    .small { font-size: 14px; padding:6px 12px; }
 
-        #fileInput {
-            display: none;
-        }
+    .palette-container { display:none; }
+    .palette {
+      display:flex; width:100%; height:120px; border-radius:15px; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,.2); margin-bottom: 14px;
+    }
+    .color-swatch {
+      flex:1; min-width:0; display:flex; align-items:end; justify-content:center; padding: 14px 10px;
+      font-weight:700; text-shadow: 1px 1px 2px rgba(0,0,0,.5); cursor:pointer; transition: transform .15s ease; position:relative;
+    }
+    .color-swatch:hover { transform: scale(1.04); z-index:1; }
+    .color-info { text-align:center; }
+    .hex-code { font-size: 13px; margin-bottom: 2px; letter-spacing:.3px; }
+    .rgb-code { font-size: 11px; opacity:.9; }
 
-        .upload-btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: transform 0.2s ease;
-        }
+    .anti-palette { border: 3px solid #dc3545; background: repeating-linear-gradient(45deg,transparent,transparent 10px, rgba(220,53,69,.08) 10px, rgba(220,53,69,.08) 20px); }
+    .anti-palette .color-swatch { border: 2px solid rgba(220,53,69,.25); }
+    .anti-palette .color-swatch::before {
+      content: '⚠️'; position:absolute; top:6px; right:6px; font-size: 16px;
+    }
 
-        .upload-btn:hover {
-            transform: translateY(-2px);
-        }
+    .compatibility-results {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 15px; padding: 20px; margin: 16px 0; text-align:center;
+    }
+    .compatibility-score { font-size: 2.4rem; font-weight: 800; margin-bottom: 6px; }
+    .compatibility-score.excellent { color:#28a745; }
+    .compatibility-score.good { color:#ffc107; }
+    .compatibility-score.poor { color:#dc3545; }
+    .compatibility-analysis { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .palette-card { background:#fff; border-radius:10px; padding: 12px; box-shadow: 0 5px 15px rgba(0,0,0,.08); }
+    .palette-card h4 { text-align:center; margin-bottom: 10px; color:#333; }
 
-        .preview-container {
-            display: none;
-            margin-bottom: 30px;
-        }
-
-        #imagePreview {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            display: block;
-            margin: 0 auto;
-        }
-
-        .palette-container {
-            display: none;
-        }
-
-        .palette {
-            display: flex;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            margin-bottom: 20px;
-            height: 120px;
-            width: 100%;
-        }
-
-        .color-swatch {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            align-items: end;
-            justify-content: center;
-            padding: 15px 10px;
-            color: white;
-            font-weight: 600;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-            cursor: pointer;
-            transition: transform 0.2s ease;
-            position: relative;
-        }
-
-        .color-swatch:hover {
-            transform: scale(1.05);
-            z-index: 10;
-        }
-
-        .color-info {
-            text-align: center;
-        }
-
-        .hex-code {
-            font-size: 14px;
-            margin-bottom: 3px;
-        }
-
-        .rgb-code {
-            font-size: 11px;
-            opacity: 0.9;
-        }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .control-btn {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .control-btn:hover {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .anti-palette {
-            border: 3px solid #dc3545;
-            background: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 10px,
-                rgba(220, 53, 69, 0.1) 10px,
-                rgba(220, 53, 69, 0.1) 20px
-            );
-        }
-
-        .anti-palette .color-swatch {
-            border: 2px solid rgba(220, 53, 69, 0.3);
-            position: relative;
-        }
-
-        .anti-palette .color-swatch::before {
-            content: '⚠️';
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            font-size: 16px;
-            z-index: 1;
-        }
-
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #28a745;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            display: none;
-            z-index: 1000;
-        }
-
-        .loading {
-            text-align: center;
-            color: #667eea;
-            display: none;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    .toast {
+      position: fixed; top: 18px; right: 18px; background:#28a745; color:white; padding: 12px 18px; border-radius: 10px;
+      display:none; z-index: 1000; font-weight:700;
+    }
+    .loading { text-align:center; color:#667eea; display:none; margin: 6px 0 10px; }
+    .spinner {
+      display:inline-block; width: 18px; height: 18px; border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius:50%;
+      animation: spin 1s linear infinite; margin-right: 8px;
+    }
+    @keyframes spin { 0%{ transform:rotate(0deg); } 100%{ transform:rotate(360deg); } }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎨 Color Palette Generator</h1>
-        
-        <div class="upload-area" id="uploadArea">
-            <p style="font-size: 18px; margin-bottom: 20px; color: #666;">
-                Drop an image here or click to upload
-            </p>
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                Choose Image
-            </button>
-            <input type="file" id="fileInput" accept="image/*">
-        </div>
+  <div class="container">
+    <h1>🎨 Color Palette Generator</h1>
+    <p class="subtitle">Extract palettes from images, compare two images, find bridge colors, export JSON/CSS.</p>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            Extracting colors...
-        </div>
-
-        <div class="preview-container" id="previewContainer">
-            <img id="imagePreview" alt="Preview">
-        </div>
-
-        <div class="palette-container" id="paletteContainer">
-            <div class="controls">
-                <button class="control-btn" onclick="generatePalette(5)">5 Colors</button>
-                <button class="control-btn" onclick="generatePalette(8)">8 Colors</button>
-                <button class="control-btn" onclick="generatePalette(10)">10 Colors</button>
-                <button class="control-btn" onclick="generateAntiPalette()">⚠️ Anti-Palette</button>
-                <button class="control-btn" onclick="exportPalette()">Export All</button>
-            </div>
-            <div class="palette" id="palette"></div>
-            <div class="anti-palette-container" id="antiPaletteContainer" style="display: none;">
-                <h3 style="text-align: center; color: #dc3545; margin: 20px 0 10px 0;">🚫 Colors to Avoid</h3>
-                <p style="text-align: center; color: #666; margin-bottom: 15px; font-size: 14px;">
-                    These colors clash with your main palette
-                </p>
-                <div class="palette anti-palette" id="antiPalette"></div>
-            </div>
-        </div>
-
-        <div class="toast" id="toast">Color copied to clipboard!</div>
+    <div class="mode-selector">
+      <button id="singleModeBtn" class="mode-btn active" aria-pressed="true">Single Image</button>
+      <button id="compareModeBtn" class="mode-btn" aria-pressed="false">Compare Images</button>
     </div>
 
-    <canvas id="canvas" style="display: none;"></canvas>
+    <!-- Single Image Mode -->
+    <section id="singleMode">
+      <div class="upload-area" id="uploadArea">
+        <p style="font-size:16px; color:#555; margin-bottom:12px;">Drop an image here or choose a file</p>
+        <label for="fileInput" class="upload-btn">Choose Image</label>
+        <input id="fileInput" class="hidden-input" type="file" accept="image/*" />
+      </div>
 
-    <script>
-        let currentImage = null;
-        let currentColors = [];
-        let currentAntiColors = [];
+      <div class="preview-container" id="previewContainer">
+        <img id="imagePreview" class="preview-image" alt="Image preview"/>
+      </div>
 
-        // File upload handling
-        const fileInput = document.getElementById('fileInput');
-        const uploadArea = document.getElementById('uploadArea');
+      <div class="controls" id="singleControls" style="display:none;">
+        <button class="control-btn" data-k="5">5 Colors</button>
+        <button class="control-btn" data-k="8">8 Colors</button>
+        <button class="control-btn" data-k="10">10 Colors</button>
+        <button class="control-btn" id="antiBtn">⚠️ Anti-Palette</button>
+        <button class="control-btn" id="exportJsonBtn">Export JSON</button>
+        <button class="control-btn" id="exportCssBtn">Export CSS Variables</button>
+      </div>
 
-        fileInput.addEventListener('change', handleFileSelect);
-        uploadArea.addEventListener('dragover', handleDragOver);
-        uploadArea.addEventListener('drop', handleDrop);
-        uploadArea.addEventListener('dragleave', handleDragLeave);
-        uploadArea.addEventListener('dragenter', handleDragEnter);
+      <div class="loading" id="loading"><span class="spinner"></span>Extracting colors…</div>
 
-        function handleFileSelect(e) {
-            console.log('File selected:', e.target.files[0]);
-            const file = e.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                console.log('Valid image file, loading...');
-                loadImage(file);
-            } else {
-                console.log('Invalid file type:', file ? file.type : 'No file');
-                alert('Please select a valid image file (JPG, PNG, GIF, etc.)');
-            }
+      <div class="palette-container" id="paletteContainer">
+        <div class="palette" id="palette"></div>
+
+        <div class="anti-palette-container" id="antiPaletteWrap" style="display:none;">
+          <h3 style="text-align:center; color:#dc3545; margin: 10px 0;">🚫 Colors to Avoid</h3>
+          <p style="text-align:center; color:#666; margin-bottom: 10px; font-size: 13px;">
+            These are low-contrast neighbors to your palette (avoid for text/UI on top of your colors).
+          </p>
+          <div class="palette anti-palette" id="antiPalette"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compare Images Mode -->
+    <section id="compareMode" style="display:none;">
+      <div class="grid-2">
+        <div>
+          <h3 style="text-align:center; margin-bottom:8px;">Image 1</h3>
+          <div class="upload-area" id="uploadArea1">
+            <p style="font-size:14px; color:#555; margin-bottom:10px;">Drop image or choose file</p>
+            <label for="fileInput1" class="upload-btn">Choose Image 1</label>
+            <input id="fileInput1" class="hidden-input" type="file" accept="image/*" />
+          </div>
+          <div class="preview-container" id="previewContainer1" style="display:none;">
+            <img id="imagePreview1" class="preview-image" alt="Image 1 preview"/>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="text-align:center; margin-bottom:8px;">Image 2</h3>
+          <div class="upload-area" id="uploadArea2">
+            <p style="font-size:14px; color:#555; margin-bottom:10px;">Drop image or choose file</p>
+            <label for="fileInput2" class="upload-btn">Choose Image 2</label>
+            <input id="fileInput2" class="hidden-input" type="file" accept="image/*" />
+          </div>
+          <div class="preview-container" id="previewContainer2" style="display:none;">
+            <img id="imagePreview2" class="preview-image" alt="Image 2 preview"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls" id="compareControls" style="display:none;">
+        <label for="compareK" style="align-self:center; font-weight:700;">Colors per image:</label>
+        <select id="compareK" class="control-btn small" style="cursor:pointer;">
+          <option value="5" selected>5</option>
+          <option value="8">8</option>
+          <option value="10">10</option>
+        </select>
+        <button class="control-btn" id="analyzeBtn">🔍 Analyze Compatibility</button>
+      </div>
+
+      <div class="loading" id="loadingCompare"><span class="spinner"></span>Analyzing…</div>
+
+      <div id="comparisonResults" style="display:none;">
+        <div class="compatibility-results">
+          <div id="compatibilityScore" class="compatibility-score">—</div>
+          <div id="compatibilityLabel" style="font-weight:800; margin-bottom:6px;">—</div>
+          <div id="compatibilityDescription" style="color:#555;">—</div>
+        </div>
+        <div class="compatibility-analysis">
+          <div class="palette-card">
+            <h4>Image 1 Palette</h4>
+            <div class="palette" id="palette1"></div>
+          </div>
+          <div class="palette-card">
+            <h4>Image 2 Palette</h4>
+            <div class="palette" id="palette2"></div>
+          </div>
+        </div>
+        <div id="bridgeBlock" style="display:none; margin-top: 10px;">
+          <h3 style="text-align:center; color:#667eea; margin: 12px 0 8px;">🌈 Bridge Colors</h3>
+          <p style="text-align:center; color:#666; margin-bottom: 8px; font-size: 13px;">These colors help tie both palettes together.</p>
+          <div class="palette" id="bridgePalette"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast">Color copied to clipboard!</div>
+
+  <!-- Hidden canvases for sampling -->
+  <canvas id="canvas" style="display:none;"></canvas>
+  <canvas id="canvas1" style="display:none;"></canvas>
+  <canvas id="canvas2" style="display:none;"></canvas>
+
+  <script>
+    // -----------------------------
+    // Global state
+    // -----------------------------
+    let currentMode = 'single';
+    let currentImage = null;
+    let currentColors = [];
+    let currentAntiColors = [];
+
+    let currentImage1 = null, currentImage2 = null;
+    let currentColors1 = [], currentColors2 = [];
+
+    // -----------------------------
+    // Mode switching
+    // -----------------------------
+    const singleModeBtn = document.getElementById('singleModeBtn');
+    const compareModeBtn = document.getElementById('compareModeBtn');
+    const singleModeEl   = document.getElementById('singleMode');
+    const compareModeEl  = document.getElementById('compareMode');
+
+    function switchMode(mode){
+      currentMode = mode;
+      const isSingle = mode === 'single';
+      singleModeEl.style.display = isSingle ? 'block' : 'none';
+      compareModeEl.style.display = isSingle ? 'none' : 'block';
+      singleModeBtn.classList.toggle('active', isSingle);
+      compareModeBtn.classList.toggle('active', !isSingle);
+      singleModeBtn.setAttribute('aria-pressed', String(isSingle));
+      compareModeBtn.setAttribute('aria-pressed', String(!isSingle));
+    }
+    singleModeBtn.addEventListener('click', () => switchMode('single'));
+    compareModeBtn.addEventListener('click', () => switchMode('compare'));
+
+    // -----------------------------
+    // DOM refs
+    // -----------------------------
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const loading = document.getElementById('loading');
+    const paletteContainer = document.getElementById('paletteContainer');
+    const paletteEl = document.getElementById('palette');
+    const singleControls = document.getElementById('singleControls');
+    const antiBtn = document.getElementById('antiBtn');
+    const exportJsonBtn = document.getElementById('exportJsonBtn');
+    const exportCssBtn = document.getElementById('exportCssBtn');
+    const antiWrap = document.getElementById('antiPaletteWrap');
+    const antiPaletteEl = document.getElementById('antiPalette');
+
+    const fileInput1 = document.getElementById('fileInput1');
+    const fileInput2 = document.getElementById('fileInput2');
+    const previewContainer1 = document.getElementById('previewContainer1');
+    const previewContainer2 = document.getElementById('previewContainer2');
+    const imagePreview1 = document.getElementById('imagePreview1');
+    const imagePreview2 = document.getElementById('imagePreview2');
+    const compareControls = document.getElementById('compareControls');
+    const compareKSelect = document.getElementById('compareK');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const loadingCompare = document.getElementById('loadingCompare');
+    const comparisonResults = document.getElementById('comparisonResults');
+    const compatibilityScore = document.getElementById('compatibilityScore');
+    const compatibilityLabel = document.getElementById('compatibilityLabel');
+    const compatibilityDescription = document.getElementById('compatibilityDescription');
+    const palette1 = document.getElementById('palette1');
+    const palette2 = document.getElementById('palette2');
+    const bridgeBlock = document.getElementById('bridgeBlock');
+    const bridgePalette = document.getElementById('bridgePalette');
+
+    const uploadArea = document.getElementById('uploadArea');
+    const uploadArea1 = document.getElementById('uploadArea1');
+    const uploadArea2 = document.getElementById('uploadArea2');
+
+    // -----------------------------
+    // Drag & Drop
+    // -----------------------------
+    function wireDrop(zoneEl, onFile){
+      zoneEl.addEventListener('dragover', e => { e.preventDefault(); zoneEl.classList.add('dragover'); });
+      zoneEl.addEventListener('dragleave', () => zoneEl.classList.remove('dragover'));
+      zoneEl.addEventListener('drop', e => {
+        e.preventDefault(); zoneEl.classList.remove('dragover');
+        const f = e.dataTransfer.files?.[0];
+        if (f && f.type.startsWith('image/')) onFile(f);
+      });
+    }
+    wireDrop(uploadArea, loadImage);
+    wireDrop(uploadArea1, f => loadCompareImage(f, 1));
+    wireDrop(uploadArea2, f => loadCompareImage(f, 2));
+
+    // -----------------------------
+    // File selection
+    // -----------------------------
+    fileInput.addEventListener('change', e => {
+      const f = e.target.files[0];
+      if (f && f.type.startsWith('image/')) loadImage(f);
+    });
+    fileInput1.addEventListener('change', e => {
+      const f = e.target.files[0];
+      if (f && f.type.startsWith('image/')) loadCompareImage(f, 1);
+    });
+    fileInput2.addEventListener('change', e => {
+      const f = e.target.files[0];
+      if (f && f.type.startsWith('image/')) loadCompareImage(f, 2);
+    });
+
+    function loadImage(file){
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          currentImage = img;
+          imagePreview.src = ev.target.result;
+          previewContainer.style.display = 'block';
+          singleControls.style.display = 'flex';
+          generatePalette(5);
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function loadCompareImage(file, imageNum){
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          if (imageNum === 1){
+            currentImage1 = img;
+            imagePreview1.src = ev.target.result;
+            previewContainer1.style.display = 'block';
+          } else {
+            currentImage2 = img;
+            imagePreview2.src = ev.target.result;
+            previewContainer2.style.display = 'block';
+          }
+          if (currentImage1 && currentImage2){
+            compareControls.style.display = 'flex';
+          }
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // -----------------------------
+    // Controls
+    // -----------------------------
+    document.querySelectorAll('#singleControls .control-btn[data-k]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const k = parseInt(btn.getAttribute('data-k'), 10);
+        generatePalette(k);
+      });
+    });
+    antiBtn.addEventListener('click', () => generateAntiPalette());
+    exportJsonBtn.addEventListener('click', () => exportPaletteJSON());
+    exportCssBtn.addEventListener('click', () => exportCssVariables());
+
+    analyzeBtn.addEventListener('click', () => compareImages());
+
+    // -----------------------------
+    // Canvas helpers & color extraction
+    // -----------------------------
+    function extractColors(img, k, canvasId){
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+
+      const maxSize = 220;
+      const scale = Math.min(maxSize / img.width, maxSize / img.height);
+      canvas.width = Math.max(1, Math.floor(img.width * scale));
+      canvas.height = Math.max(1, Math.floor(img.height * scale));
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+      // Sample every 4th pixel (stride = 16 in the Uint8 array)
+      const pixels = [];
+      for (let i=0; i<imageData.length; i+=16){
+        const r = imageData[i], g = imageData[i+1], b = imageData[i+2], a = imageData[i+3];
+        if (a >= 128) pixels.push([r,g,b]);
+      }
+      return kMeansColorsLab(pixels, k);
+    }
+
+    // K-means++ in Lab space for nicer clustering
+    function kMeansColorsLab(rgbPixels, k){
+      if (!rgbPixels.length || k <= 0) return [];
+      const labs = rgbPixels.map(rgb2lab);
+
+      // k-means++ initialization
+      const centers = [];
+      centers.push(labs[Math.floor(Math.random() * labs.length)]);
+      while (centers.length < k){
+        const distances = labs.map(p => Math.min(...centers.map(c => deltaE76(p, c))));
+        const sum = distances.reduce((a,b)=>a+b, 0) || 1;
+        let r = Math.random() * sum;
+        let idx = 0;
+        for (let i=0; i<distances.length; i++){
+          r -= distances[i];
+          if (r <= 0){ idx = i; break; }
         }
+        centers.push(labs[idx]);
+      }
 
-        function handleDragEnter(e) {
-            e.preventDefault();
+      // Iterate
+      for (let iter=0; iter<10; iter++){
+        const clusters = Array.from({length:k}, ()=>[]);
+        for (const p of labs){
+          let bi = 0; let bd = 1e9;
+          for (let i=0;i<k;i++){
+            const d = deltaE76(p, centers[i]);
+            if (d < bd){ bd = d; bi = i; }
+          }
+          clusters[bi].push(p);
         }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            uploadArea.classList.add('dragover');
+        for (let i=0; i<k; i++){
+          const c = clusters[i];
+          if (c.length){
+            const L = c.reduce((a,p)=>a+p[0],0)/c.length;
+            const a = c.reduce((a,p)=>a+p[1],0)/c.length;
+            const b = c.reduce((a,p)=>a+p[2],0)/c.length;
+            centers[i] = [L,a,b];
+          }
         }
+      }
 
-        function handleDrop(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            uploadArea.classList.remove('dragover');
-            
-            console.log('File dropped');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                const file = files[0];
-                console.log('Dropped file:', file.name, file.type);
-                if (file.type.startsWith('image/')) {
-                    loadImage(file);
-                } else {
-                    alert('Please drop a valid image file (JPG, PNG, GIF, etc.)');
-                }
-            }
+      // Convert back to RGB + hex
+      const colors = centers.map(lab => {
+        const rgb = lab2rgb(lab);
+        return { rgb, hex: rgbToHex(rgb[0], rgb[1], rgb[2]) };
+      });
+
+      // Sort by Hue, then Sat desc, then Value desc
+      colors.sort((A,B) => {
+        const [ha,sa,va] = rgbToHsv(A.rgb);
+        const [hb,sb,vb] = rgbToHsv(B.rgb);
+        return ha - hb || sb - sa || vb - va;
+      });
+
+      return colors;
+    }
+
+    // -----------------------------
+    // Display helpers
+    // -----------------------------
+    function displayPalette(colors){
+      paletteEl.innerHTML = '';
+      for (const color of colors){
+        const sw = document.createElement('div');
+        sw.className = 'color-swatch';
+        sw.style.backgroundColor = color.hex;
+        const tc = textColorFor(color.rgb);
+        sw.style.color = tc;
+        sw.style.textShadow = tc === '#000' ? 'none' : '1px 1px 2px rgba(0,0,0,.5)';
+        sw.title = 'Click to copy ' + color.hex.toUpperCase();
+        sw.addEventListener('click', () => copyToClipboard(color.hex));
+
+        sw.innerHTML = `<div class="color-info">
+          <div class="hex-code">${color.hex.toUpperCase()}</div>
+          <div class="rgb-code">RGB(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})</div>
+        </div>`;
+        paletteEl.appendChild(sw);
+      }
+    }
+
+    function displayPaletteIn(container, colors){
+      container.innerHTML = '';
+      for (const color of colors){
+        const sw = document.createElement('div');
+        sw.className = 'color-swatch';
+        sw.style.backgroundColor = color.hex;
+        const tc = textColorFor(color.rgb);
+        sw.style.color = tc;
+        sw.style.textShadow = tc === '#000' ? 'none' : '1px 1px 2px rgba(0,0,0,.5)';
+        sw.addEventListener('click', () => copyToClipboard(color.hex));
+        sw.innerHTML = `<div class="color-info">
+          <div class="hex-code">${color.hex.toUpperCase()}</div>
+          <div class="rgb-code">RGB(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})</div>
+        </div>`;
+        container.appendChild(sw);
+      }
+    }
+
+    // -----------------------------
+    // Single: generate palette & anti palette
+    // -----------------------------
+    function generatePalette(k){
+      if (!currentImage) return;
+      loading.style.display = 'block';
+      setTimeout(() => {
+        currentColors = extractColors(currentImage, k, 'canvas');
+        displayPalette(currentColors);
+        paletteContainer.style.display = 'block';
+        antiWrap.style.display = 'none';
+        loading.style.display = 'none';
+      }, 30);
+    }
+
+    function generateAntiPalette(){
+      if (!currentColors.length) return;
+      const anti = calculateAntiColors(currentColors);
+      currentAntiColors = anti;
+      displayPaletteIn(antiPaletteEl, anti);
+      antiWrap.style.display = 'block';
+    }
+
+    // -----------------------------
+    // Compare: analyze two images
+    // -----------------------------
+    function compareImages(){
+      if (!currentImage1 || !currentImage2){ alert('Please upload both images first.'); return; }
+      const k = parseInt(compareKSelect.value, 10) || 5;
+      loadingCompare.style.display = 'block';
+      setTimeout(() => {
+        currentColors1 = extractColors(currentImage1, k, 'canvas1');
+        currentColors2 = extractColors(currentImage2, k, 'canvas2');
+        const analysis = analyzeCompatibility(currentColors1, currentColors2);
+        showComparison(analysis);
+        loadingCompare.style.display = 'none';
+      }, 30);
+    }
+
+    function showComparison(analysis){
+      comparisonResults.style.display = 'block';
+      displayPaletteIn(palette1, currentColors1);
+      displayPaletteIn(palette2, currentColors2);
+
+      compatibilityScore.textContent = `${analysis.score}%`;
+      compatibilityScore.className = 'compatibility-score ' + (analysis.score>=80 ? 'excellent' : analysis.score>=60 ? 'good' : 'poor');
+      compatibilityLabel.textContent = analysis.label;
+      compatibilityDescription.textContent = analysis.description;
+
+      if (analysis.bridgeColors?.length){
+        bridgeBlock.style.display = 'block';
+        displayPaletteIn(bridgePalette, analysis.bridgeColors);
+      } else {
+        bridgeBlock.style.display = 'none';
+      }
+    }
+
+    // -----------------------------
+    // Exports
+    // -----------------------------
+    function exportPaletteJSON(){
+      if (!currentColors.length) return;
+      const data = {
+        mainColors: currentColors.map(c => ({ hex: c.hex, rgb: c.rgb })),
+        antiColors: currentAntiColors.map(c => ({ hex: c.hex, rgb: c.rgb, reason: c.reason })),
+        timestamp: new Date().toISOString(),
+        mainColorCount: currentColors.length,
+        antiColorCount: currentAntiColors.length
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = Object.assign(document.createElement('a'), { href:url, download: `color-palette-${Date.now()}.json` });
+      a.click(); URL.revokeObjectURL(url);
+    }
+
+    function exportCssVariables(){
+      if (!currentColors.length) return;
+      const lines = currentColors.map((c,i)=>`  --palette-${i+1}: ${c.hex};`).join('\n');
+      const css = `:root{\n${lines}\n}\n`;
+      const blob = new Blob([css], {type:'text/css'});
+      const url = URL.createObjectURL(blob);
+      const a = Object.assign(document.createElement('a'), { href:url, download: `palette-${Date.now()}.css` });
+      a.click(); URL.revokeObjectURL(url);
+    }
+
+    // -----------------------------
+    // Clipboard + toast
+    // -----------------------------
+    function copyToClipboard(text){
+      if (navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(text).then(showToast);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        try { document.execCommand('copy'); showToast(); } finally { document.body.removeChild(ta); }
+      }
+    }
+    function showToast(){
+      const toast = document.getElementById('toast');
+      toast.style.display = 'block';
+      setTimeout(()=> { toast.style.display='none'; }, 1700);
+    }
+
+    // -----------------------------
+    // Color math helpers
+    // -----------------------------
+    function rgbToHex(r,g,b){
+      return '#' + ((1<<24) + (r<<16) + (g<<8) + b).toString(16).slice(1);
+    }
+
+    function rgbToHsv([r,g,b]){
+      r/=255; g/=255; b/=255;
+      const max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
+      let h = d===0?0: max===r ? ((g-b)/d)%6 : max===g ? (b-r)/d+2 : (r-g)/d+4;
+      h = Math.round((h<0?h+6:h)*60);
+      const s = max===0?0:d/max;
+      const v = max;
+      return [h, s, v];
+    }
+
+    function textColorFor(rgb){
+      // WCAG-ish relative luminance threshold for black/white text
+      const [r,g,b] = rgb.map(v => v/255);
+      const lin = [r,g,b].map(c => c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4));
+      const L = 0.2126*lin[0] + 0.7152*lin[1] + 0.0722*lin[2];
+      return L > 0.179 ? '#000' : '#fff';
+    }
+
+    // sRGB -> XYZ -> Lab (D65)
+    function rgb2xyz([r,g,b]){
+      r/=255; g/=255; b/=255;
+      [r,g,b] = [r,g,b].map(c => c<=0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4));
+      return [
+        0.4124*r + 0.3576*g + 0.1805*b,
+        0.2126*r + 0.7152*g + 0.0722*b,
+        0.0193*r + 0.1192*g + 0.9505*b
+      ];
+    }
+    function xyz2lab([x,y,z]){
+      const xr=x/0.95047, yr=y/1.00000, zr=z/1.08883;
+      const f = t => t>0.008856 ? Math.cbrt(t) : (7.787*t)+(16/116);
+      const fx=f(xr), fy=f(yr), fz=f(zr);
+      return [116*fy-16, 500*(fx-fy), 200*(fy-fz)];
+    }
+    function rgb2lab(rgb){ return xyz2lab(rgb2xyz(rgb)); }
+
+    function lab2rgb([L,a,b]){
+      const fy = (L+16)/116, fx = fy + a/500, fz = fy - b/200;
+      const fInv = t => {
+        const t3 = t*t*t;
+        return t3>0.008856 ? t3 : (t-16/116)/7.787;
+      }
+      const xr=fInv(fx), yr=fInv(fy), zr=fInv(fz);
+      let x=0.95047*xr, y=1.00000*yr, z=1.08883*zr;
+      let r =  3.2406*x + -1.5372*y + -0.4986*z;
+      let g = -0.9689*x +  1.8758*y +  0.0415*z;
+      let b2=  0.0557*x + -0.2040*y +  1.0570*z;
+      const comp = c => {
+        c = Math.max(0, Math.min(1, c));
+        return Math.round(255*(c<=0.0031308 ? 12.92*c : 1.055*Math.pow(c,1/2.4)-0.055));
+      }
+      return [comp(r), comp(g), comp(b2)];
+    }
+
+    function deltaE76(lab1, lab2){
+      const dL=lab1[0]-lab2[0], da=lab1[1]-lab2[1], db=lab1[2]-lab2[2];
+      return Math.sqrt(dL*dL+da*da+db*db);
+    }
+
+    // -----------------------------
+    // Compatibility + bridge colors
+    // -----------------------------
+    function paletteDistance(p1, p2){
+      const labs1 = p1.map(c=>rgb2lab(c.rgb)), labs2 = p2.map(c=>rgb2lab(c.rgb));
+      function meanNN(A,B){
+        return A.reduce((acc,a)=>{
+          let best=1e9;
+          for (const b of B){ const d=deltaE76(a,b); if (d<best) best=d; }
+          return acc+best;
+        },0)/A.length;
+      }
+      return (meanNN(labs1,labs2)+meanNN(labs2,labs1))/2;
+    }
+
+    function analyzeCompatibility(p1, p2){
+      const d = paletteDistance(p1, p2); // lower = closer
+      const score = Math.max(0, Math.min(100, Math.round(100 - d)));
+      const label = score>=80 ? 'Excellent Match!' : score>=60 ? 'Good Harmony' : 'Decent Pairing';
+      const description = score>=80
+        ? 'These palettes are naturally complementary.'
+        : score>=60
+          ? 'These work well together; consider bridge colors.'
+          : 'There’s some tension—use bridge colors or adjust saturation/lightness.';
+
+      // Bridge colors: midpoints of nearest pairs
+      const labs1 = p1.map(c=>rgb2lab(c.rgb));
+      const labs2 = p2.map(c=>rgb2lab(c.rgb));
+      const bridges = [];
+      for (let i=0;i<Math.min(p1.length, p2.length);i++){
+        const a = labs1[i % labs1.length];
+        let bestIdx=0, best=1e9;
+        for (let j=0;j<labs2.length;j++){
+          const dij = deltaE76(a, labs2[j]);
+          if (dij < best){ best = dij; bestIdx = j; }
         }
+        const mid = [(a[0]+labs2[bestIdx][0])/2, (a[1]+labs2[bestIdx][1])/2, (a[2]+labs2[bestIdx][2])/2];
+        const rgb = lab2rgb(mid);
+        bridges.push({ rgb, hex: rgbToHex(rgb[0],rgb[1],rgb[2]) });
+      }
 
-        function handleDragLeave(e) {
-            if (!uploadArea.contains(e.relatedTarget)) {
-                uploadArea.classList.remove('dragover');
-            }
-        }
+      // Ensure unique-ish bridges by hex
+      const seen = new Set(); const uniq = [];
+      for (const c of bridges){
+        if (!seen.has(c.hex)){ seen.add(c.hex); uniq.push(c); }
+      }
 
-        function loadImage(file) {
-            console.log('Loading image:', file.name);
-            const reader = new FileReader();
-            
-            reader.onerror = function() {
-                console.error('Error reading file');
-                alert('Error reading the image file. Please try again.');
-            };
-            
-            reader.onload = function(e) {
-                console.log('File read successfully');
-                const img = new Image();
-                
-                img.onerror = function() {
-                    console.error('Error loading image');
-                    alert('Error loading the image. Please make sure it\'s a valid image file.');
-                };
-                
-                img.onload = function() {
-                    console.log('Image loaded successfully:', img.width, 'x', img.height);
-                    currentImage = img;
-                    
-                    const preview = document.getElementById('imagePreview');
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                    document.getElementById('previewContainer').style.display = 'block';
-                    
-                    generatePalette(5);
-                };
-                
-                img.src = e.target.result;
-            };
-            
-            reader.readAsDataURL(file);
-        }
+      return { score, label, description, bridgeColors: uniq.slice(0,5) };
+    }
 
-        function generatePalette(colorCount = 5) {
-            if (!currentImage) return;
+    // -----------------------------
+    // Anti-colors (low-contrast neighbors)
+    // -----------------------------
+    function calculateAntiColors(mainColors){
+      const labs = mainColors.map(c=>rgb2lab(c.rgb));
+      const avoid = [];
+      for (const lab of labs){
+        // Slight L* nudge -> too similar contrast vs. base
+        const bad = [Math.min(100, Math.max(0, lab[0] + 4)), lab[1], lab[2]];
+        const rgb = lab2rgb(bad);
+        avoid.push({ rgb, hex: rgbToHex(rgb[0], rgb[1], rgb[2]), reason: 'Low contrast with main palette' });
+      }
+      return avoid;
+    }
 
-            document.getElementById('loading').style.display = 'block';
-            
-            setTimeout(() => {
-                const colors = extractColors(currentImage, colorCount);
-                currentColors = colors;
-                displayPalette(colors);
-                document.getElementById('paletteContainer').style.display = 'block';
-                document.getElementById('loading').style.display = 'none';
-            }, 100);
-        }
-
-        function extractColors(img, colorCount) {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            const maxSize = 200;
-            const scale = Math.min(maxSize / img.width, maxSize / img.height);
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            
-            const pixels = [];
-            for (let i = 0; i < data.length; i += 16) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-                const a = data[i + 3];
-                
-                if (a > 128) {
-                    pixels.push([r, g, b]);
-                }
-            }
-            
-            return kMeansColors(pixels, colorCount);
-        }
-
-        function kMeansColors(pixels, k) {
-            if (pixels.length === 0) return [];
-            
-            let centroids = [];
-            for (let i = 0; i < k; i++) {
-                const randomPixel = pixels[Math.floor(Math.random() * pixels.length)];
-                centroids.push([...randomPixel]);
-            }
-            
-            for (let iter = 0; iter < 10; iter++) {
-                const clusters = Array(k).fill().map(() => []);
-                
-                pixels.forEach(pixel => {
-                    let minDist = Infinity;
-                    let closestCentroid = 0;
-                    
-                    centroids.forEach((centroid, idx) => {
-                        const dist = colorDistance(pixel, centroid);
-                        if (dist < minDist) {
-                            minDist = dist;
-                            closestCentroid = idx;
-                        }
-                    });
-                    
-                    clusters[closestCentroid].push(pixel);
-                });
-                
-                centroids = clusters.map(cluster => {
-                    if (cluster.length === 0) return centroids[0];
-                    
-                    const sum = cluster.reduce((acc, pixel) => [
-                        acc[0] + pixel[0],
-                        acc[1] + pixel[1],
-                        acc[2] + pixel[2]
-                    ], [0, 0, 0]);
-                    
-                    return [
-                        Math.round(sum[0] / cluster.length),
-                        Math.round(sum[1] / cluster.length),
-                        Math.round(sum[2] / cluster.length)
-                    ];
-                });
-            }
-            
-            return centroids
-                .map(centroid => ({
-                    rgb: centroid,
-                    hex: rgbToHex(centroid[0], centroid[1], centroid[2])
-                }))
-                .sort((a, b) => {
-                    const brightnessA = (a.rgb[0] + a.rgb[1] + a.rgb[2]) / 3;
-                    const brightnessB = (b.rgb[0] + b.rgb[1] + b.rgb[2]) / 3;
-                    return brightnessA - brightnessB;
-                });
-        }
-
-        function colorDistance(color1, color2) {
-            return Math.sqrt(
-                Math.pow(color1[0] - color2[0], 2) +
-                Math.pow(color1[1] - color2[1], 2) +
-                Math.pow(color1[2] - color2[2], 2)
-            );
-        }
-
-        function rgbToHex(r, g, b) {
-            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        }
-
-        function displayPalette(colors) {
-            const palette = document.getElementById('palette');
-            palette.innerHTML = '';
-            
-            colors.forEach(color => {
-                const swatch = document.createElement('div');
-                swatch.className = 'color-swatch';
-                swatch.style.backgroundColor = color.hex;
-                swatch.onclick = () => copyToClipboard(color.hex);
-                
-                swatch.innerHTML = `
-                    <div class="color-info">
-                        <div class="hex-code">${color.hex.toUpperCase()}</div>
-                        <div class="rgb-code">RGB(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})</div>
-                    </div>
-                `;
-                
-                palette.appendChild(swatch);
-            });
-        }
-
-        function generateAntiPalette() {
-            console.log('generateAntiPalette called');
-            if (currentColors.length === 0) {
-                alert('Please generate a main palette first!');
-                return;
-            }
-
-            console.log('Generating anti-palette from:', currentColors);
-            document.getElementById('loading').style.display = 'block';
-            
-            setTimeout(() => {
-                try {
-                    const antiColors = calculateAntiColors(currentColors);
-                    console.log('Generated anti-colors:', antiColors);
-                    currentAntiColors = antiColors;
-                    displayAntiPalette(antiColors);
-                    document.getElementById('antiPaletteContainer').style.display = 'block';
-                } catch (error) {
-                    console.error('Error generating anti-palette:', error);
-                    alert('Error generating anti-palette. Check console for details.');
-                } finally {
-                    document.getElementById('loading').style.display = 'none';
-                }
-            }, 100);
-        }
-
-        function calculateAntiColors(mainColors) {
-            console.log('Starting anti-color calculation...');
-            const antiColors = [];
-            
-            try {
-                mainColors.forEach((mainColor, index) => {
-                    console.log(`Processing main color ${index}:`, mainColor);
-                    
-                    const rgb = mainColor.rgb;
-                    
-                    const complement = [255 - rgb[0], 255 - rgb[1], 255 - rgb[2]];
-                    const shifted1 = [(rgb[0] + 128) % 256, (rgb[1] + 64) % 256, (rgb[2] + 192) % 256];
-                    const shifted2 = [(rgb[0] + 64) % 256, (rgb[1] + 192) % 256, (rgb[2] + 128) % 256];
-                    const muddy1 = [
-                        Math.floor((rgb[0] + 100) / 2), 
-                        Math.floor((rgb[1] + 80) / 2), 
-                        Math.floor((rgb[2] + 60) / 2)
-                    ];
-                    
-                    antiColors.push(
-                        { rgb: complement, hex: rgbToHex(...complement), reason: 'Direct complement' },
-                        { rgb: shifted1, hex: rgbToHex(...shifted1), reason: 'Shifted hue clash' },
-                        { rgb: shifted2, hex: rgbToHex(...shifted2), reason: 'Muddy shift' },
-                        { rgb: muddy1, hex: rgbToHex(...muddy1), reason: 'Poor saturation' }
-                    );
-                });
-                
-                console.log('Generated raw anti-colors:', antiColors);
-                
-                const seen = new Set();
-                const uniqueAntiColors = antiColors.filter(color => {
-                    if (seen.has(color.hex)) return false;
-                    seen.add(color.hex);
-                    return true;
-                }).slice(0, 6);
-                
-                console.log('Final unique anti-colors:', uniqueAntiColors);
-                return uniqueAntiColors;
-                
-            } catch (error) {
-                console.error('Error in calculateAntiColors:', error);
-                return [];
-            }
-        }
-
-        function displayAntiPalette(colors) {
-            console.log('Displaying anti-palette with colors:', colors);
-            const antiPalette = document.getElementById('antiPalette');
-            antiPalette.innerHTML = '';
-            
-            if (!colors || colors.length === 0) {
-                console.error('No anti-colors to display');
-                return;
-            }
-            
-            colors.forEach((color, index) => {
-                console.log(`Adding anti-color ${index}:`, color);
-                const swatch = document.createElement('div');
-                swatch.className = 'color-swatch';
-                swatch.style.backgroundColor = color.hex;
-                swatch.onclick = () => copyToClipboard(color.hex);
-                swatch.title = color.reason;
-                
-                swatch.innerHTML = `
-                    <div class="color-info">
-                        <div class="hex-code">${color.hex.toUpperCase()}</div>
-                        <div class="rgb-code">RGB(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})</div>
-                    </div>
-                `;
-                
-                antiPalette.appendChild(swatch);
-            });
-            
-            console.log('Anti-palette display complete');
-        }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast();
-            });
-        }
-
-        function showToast() {
-            const toast = document.getElementById('toast');
-            toast.style.display = 'block';
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 2000);
-        }
-
-        function exportPalette() {
-            if (currentColors.length === 0) return;
-            
-            const data = {
-                mainColors: currentColors.map(c => ({ hex: c.hex, rgb: c.rgb })),
-                antiColors: currentAntiColors.map(c => ({ hex: c.hex, rgb: c.rgb, reason: c.reason })),
-                timestamp: new Date().toISOString(),
-                mainColorCount: currentColors.length,
-                antiColorCount: currentAntiColors.length
-            };
-            
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `color-palette-with-anti-${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-    </script>
+    // -----------------------------
+    // Loading helpers
+    // -----------------------------
+    function withLoading(el, fn){
+      el.style.display = 'block';
+      setTimeout(()=> { fn(); el.style.display='none'; }, 30);
+    }
+  </script>
 </body>
 </html>
