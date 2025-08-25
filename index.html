@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Palette Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+
+        .upload-area {
+            border: 3px dashed #ccc;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s ease;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .preview-container {
+            display: none;
+            margin-bottom: 30px;
+        }
+
+        #imagePreview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            display: block;
+            margin: 0 auto;
+        }
+
+        .palette-container {
+            display: none;
+        }
+
+        .palette {
+            display: flex;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            height: 120px;
+            width: 100%;
+        }
+
+        .color-swatch {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            padding: 15px 10px;
+            color: white;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            position: relative;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .color-info {
+            text-align: center;
+        }
+
+        .hex-code {
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .rgb-code {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .control-btn {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .anti-palette {
+            border: 3px solid #dc3545;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(220, 53, 69, 0.1) 10px,
+                rgba(220, 53, 69, 0.1) 20px
+            );
+        }
+
+        .anti-palette .color-swatch {
+            border: 2px solid rgba(220, 53, 69, 0.3);
+            position: relative;
+        }
+
+        .anti-palette .color-swatch::before {
+            content: '⚠️';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 16px;
+            z-index: 1;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            display: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Color Palette Generator</h1>
+        
+        <div class="upload-area" id="uploadArea">
+            <p style="font-size: 18px; margin-bottom: 20px; color: #666;">
+                Drop an image here or click to upload
+            </p>
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                Choose Image
+            </button>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            Extracting colors...
+        </div>
+
+        <div class="preview-container" id="previewContainer">
+            <img id="imagePreview" alt="Preview">
+        </div>
+
+        <div class="palette-container" id="paletteContainer">
+            <div class="controls">
+                <button class="control-btn" onclick="generatePalette(5)">5 Colors</button>
+                <button class="control-btn" onclick="generatePalette(8)">8 Colors</button>
+                <button class="control-btn" onclick="generatePalette(10)">10 Colors</button>
+                <button class="control-btn" onclick="generateAntiPalette()">⚠️ Anti-Palette</button>
+                <button class="control-btn" onclick="exportPalette()">Export All</button>
+            </div>
+            <div class="palette" id="palette"></div>
+            <div class="anti-palette-container" id="antiPaletteContainer" style="display: none;">
+                <h3 style="text-align: center; color: #dc3545; margin: 20px 0 10px 0;">🚫 Colors to Avoid</h3>
+                <p style="text-align: center; color: #666; margin-bottom: 15px; font-size: 14px;">
+                    These colors clash with your main palette
+                </p>
+                <div class="palette anti-palette" id="antiPalette"></div>
+            </div>
+        </div>
+
+        <div class="toast" id="toast">Color copied to clipboard!</div>
+    </div>
+
+    <canvas id="canvas" style="display: none;"></canvas>
+
+    <script>
+        let currentImage = null;
+        let currentColors = [];
+        let currentAntiColors = [];
+
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+
+        fileInput.addEventListener('change', handleFileSelect);
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('drop', handleDrop);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('dragenter', handleDragEnter);
+
+        function handleFileSelect(e) {
+            console.log('File selected:', e.target.files[0]);
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                console.log('Valid image file, loading...');
+                loadImage(file);
+            } else {
+                console.log('Invalid file type:', file ? file.type : 'No file');
+                alert('Please select a valid image file (JPG, PNG, GIF, etc.)');
+            }
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('dragover');
+            
+            console.log('File dropped');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                console.log('Dropped file:', file.name, file.type);
+                if (file.type.startsWith('image/')) {
+                    loadImage(file);
+                } else {
+                    alert('Please drop a valid image file (JPG, PNG, GIF, etc.)');
+                }
+            }
+        }
+
+        function handleDragLeave(e) {
+            if (!uploadArea.contains(e.relatedTarget)) {
+                uploadArea.classList.remove('dragover');
+            }
+        }
+
+        function loadImage(file) {
+            console.log('Loading image:', file.name);
+            const reader = new FileReader();
+            
+            reader.onerror = function() {
+                console.error('Error reading file');
+                alert('Error reading the image file. Please try again.');
+            };
+            
+            reader.onload = function(e) {
+                console.log('File read successfully');
+                const img = new Image();
+                
+                img.onerror = function() {
+                    console.error('Error loading image');
+                    alert('Error loading the image. Please make sure it\'s a valid image file.');
+                };
+                
+                img.onload = function() {
+                    console.log('Image loaded successfully:', img.width, 'x', img.height);
+                    currentImage = img;
+                    
+                    const preview = document.getElementById('imagePreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    document.getElementById('previewContainer').style.display = 'block';
+                    
+                    generatePalette(5);
+                };
+                
+                img.src = e.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        function generatePalette(colorCount = 5) {
+            if (!currentImage) return;
+
+            document.getElementById('loading').style.display = 'block';
+            
+            setTimeout(() => {
+                const colors = extractColors(currentImage, colorCount);
+                currentColors = colors;
+                displayPalette(colors);
+                document.getElementById('paletteContainer').style.display = 'block';
+                document.getElementById('loading').style.display = 'none';
+            }, 100);
+        }
+
+        function extractColors(img, colorCount) {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const maxSize = 200;
+            const scale = Math.min(maxSize / img.width, maxSize / img.height);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            const pixels = [];
+            for (let i = 0; i < data.length; i += 16) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                const a = data[i + 3];
+                
+                if (a > 128) {
+                    pixels.push([r, g, b]);
+                }
+            }
+            
+            return kMeansColors(pixels, colorCount);
+        }
+
+        function kMeansColors(pixels, k) {
+            if (pixels.length === 0) return [];
+            
+            let centroids = [];
+            for (let i = 0; i < k; i++) {
+                const randomPixel = pixels[Math.floor(Math.random() * pixels.length)];
+                centroids.push([...randomPixel]);
+            }
+            
+            for (let iter = 0; iter < 10; iter++) {
+                const clusters = Array(k).fill().map(() => []);
+                
+                pixels.forEach(pixel => {
+                    let minDist = Infinity;
+                    let closestCentroid = 0;
+                    
+                    centroids.forEach((centroid, idx) => {
+                        const dist = colorDistance(pixel, centroid);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            closestCentroid = idx;
+                        }
+                    });
+                    
+                    clusters[closestCentroid].push(pixel);
+                });
+                
+                centroids = clusters.map(cluster => {
+                    if (cluster.length === 0) return centroids[0];
+                    
+                    const sum = cluster.reduce((acc, pixel) => [
+                        acc[0] + pixel[0],
+                        acc[1] + pixel[1],
+                        acc[2] + pixel[2]
+                    ], [0, 0, 0]);
+                    
+                    return [
+                        Math.round(sum[0] / cluster.length),
+                        Math.round(sum[1] / cluster.length),
+                        Math.round(sum[2] / cluster.length)
+                    ];
+                });
+            }
+            
+            return centroids
+                .map(centroid => ({
+                    rgb: centroid,
+                    hex: rgbToHex(centroid[0], centroid[1], centroid[2])
+                }))
+                .sort((a, b) => {
+                    const brightnessA = (a.rgb[0] + a.rgb[1] + a.rgb[2]) / 3;
+                    const brightnessB = (b.rgb[0] + b.rgb[1] + b.rgb[2]) / 3;
+                    return brightnessA - brightnessB;
+                });
+        }
+
+        function colorDistance(color1, color2) {
+            return Math.sqrt(
+                Math.pow(color1[0] - color2[0], 2) +
+                Math.pow(color1[1] - color2[1], 2) +
+                Math.pow(color1[2] - color2[2], 2)
+            );
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        function displayPalette(colors) {
+            const palette = document.getElementById('palette');
+            palette.innerHTML = '';
+            
+            colors.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                swatch.style.backgroundColor = color.hex;
+                swatch.onclick = () => copyToClipboard(color.hex);
+                
+                swatch.innerHTML = `
+                    <div class="color-info">
+                        <div class="hex-code">${color.hex.toUpperCase()}</div>
+                        <div class="rgb-code">RGB(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})</div>
+                    </div>
+                `;
+                
+                palette.appendChild(swatch);
+            });
+        }
+
+        function generateAntiPalette() {
+            console.log('generateAntiPalette called');
+            if (currentColors.length === 0) {
+                alert('Please generate a main palette first!');
+                return;
+            }
+
+            console.log('Generating anti-palette from:', currentColors);
+            document.getElementById('loading').style.display = 'block';
+            
+            setTimeout(() => {
+                try {
+                    const antiColors = calculateAntiColors(currentColors);
+                    console.log('Generated anti-colors:', antiColors);
+                    currentAntiColors = antiColors;
+                    displayAntiPalette(antiColors);
+                    document.getElementById('antiPaletteContainer').style.display = 'block';
+                } catch (error) {
+                    console.error('Error generating anti-palette:', error);
+                    alert('Error generating anti-palette. Check console for details.');
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            }, 100);
+        }
+
+        function calculateAntiColors(mainColors) {
+            console.log('Starting anti-color calculation...');
+            const antiColors = [];
+            
+            try {
+                mainColors.forEach((mainColor, index) => {
+                    console.log(`Processing main color ${index}:`, mainColor);
+                    
+                    const rgb = mainColor.rgb;
+                    
+                    const complement = [255 - rgb[0], 255 - rgb[1], 255 - rgb[2]];
+                    const shifted1 = [(rgb[0] + 128) % 256, (rgb[1] + 64) % 256, (rgb[2] + 192) % 256];
+                    const shifted2 = [(rgb[0] + 64) % 256, (rgb[1] + 192) % 256, (rgb[2] + 128) % 256];
+                    const muddy1 = [
+                        Math.floor((rgb[0] + 100) / 2), 
+                        Math.floor((rgb[1] + 80) / 2), 
+                        Math.floor((rgb[2] + 60) / 2)
+                    ];
+                    
+                    antiColors.push(
+                        { rgb: complement, hex: rgbToHex(...complement), reason: 'Direct complement' },
+                        { rgb: shifted1, hex: rgbToHex(...shifted1), reason: 'Shifted hue clash' },
+                        { rgb: shifted2, hex: rgbToHex(...shifted2), reason: 'Muddy shift' },
+                        { rgb: muddy1, hex: rgbToHex(...muddy1), reason: 'Poor saturation' }
+                    );
+                });
+                
+                console.log('Generated raw anti-colors:', antiColors);
+                
+                const seen = new Set();
+                const uniqueAntiColors = antiColors.filter(color => {
+                    if (seen.has(color.hex)) return false;
+                    seen.add(color.hex);
+                    return true;
+                }).slice(0, 6);
+                
+                console.log('Final unique anti-colors:', uniqueAntiColors);
+                return uniqueAntiColors;
+                
+            } catch (error) {
+                console.error('Error in calculateAntiColors:', error);
+                return [];
+            }
+        }
+
+        function displayAntiPalette(colors) {
+            console.log('Displaying anti-palette with colors:', colors);
+            const antiPalette = document.getElementById('antiPalette');
+            antiPalette.innerHTML = '';
+            
+            if (!colors || colors.length === 0) {
+                console.error('No anti-colors to display');
+                return;
+            }
+            
+            colors.forEach((color, index) => {
+                console.log(`Adding anti-color ${index}:`, color);
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                swatch.style.backgroundColor = color.hex;
+                swatch.onclick = () => copyToClipboard(color.hex);
+                swatch.title = color.reason;
+                
+                swatch.innerHTML = `
+                    <div class="color-info">
+                        <div class="hex-code">${color.hex.toUpperCase()}</div>
+                        <div class="rgb-code">RGB(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})</div>
+                    </div>
+                `;
+                
+                antiPalette.appendChild(swatch);
+            });
+            
+            console.log('Anti-palette display complete');
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast();
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
+        }
+
+        function exportPalette() {
+            if (currentColors.length === 0) return;
+            
+            const data = {
+                mainColors: currentColors.map(c => ({ hex: c.hex, rgb: c.rgb })),
+                antiColors: currentAntiColors.map(c => ({ hex: c.hex, rgb: c.rgb, reason: c.reason })),
+                timestamp: new Date().toISOString(),
+                mainColorCount: currentColors.length,
+                antiColorCount: currentAntiColors.length
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `color-palette-with-anti-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
