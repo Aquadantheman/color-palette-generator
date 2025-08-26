@@ -30,16 +30,18 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Install dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+- name: Install dependencies
+  run: |
+    if [ -f package-lock.json ]; then
+      npm ci
+    else
+      npm install
+    fi
 
-      - name: Build
-        run: npm run build
+- name: Clean and Build
+  run: |
+    rm -rf dist node_modules/.vite
+    npm run build
 
       - name: List build output
         run: ls -la dist && echo && head -n 20 dist/index.html || true
