@@ -30,11 +30,25 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Install dependencies
+      - name: Install deps
         run: npm ci
 
       - name: Build
         run: npm run build
+
+      # 🔎 Sanity checks to prevent deploying the dev HTML
+      - name: Verify Vite output
+        run: |
+          test -f dist/index.html || (echo "❌ dist/index.html missing" && exit 1)
+          if grep -q "/src/main.tsx" dist/index.html; then
+            echo "❌ Built index.html still references /src/main.tsx (dev HTML)."
+            exit 1
+          fi
+          if ! grep -q "/color-palettes/assets/" dist/index.html; then
+            echo "❌ Built index.html does not reference /color-palettes/assets/; check vite.config.ts base."
+            exit 1
+          fi
+          echo "✅ Vite output looks good."
 
       - name: Add SPA fallback
         run: cp dist/index.html dist/404.html
@@ -42,7 +56,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist   # 👈 deploy only the built dist folder
+          path: ./dist  # 🚨 deploy *only* the built files
 
   deploy:
     needs: build
