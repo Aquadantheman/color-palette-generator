@@ -47,11 +47,32 @@
   }
   .upload-btn:hover{ transform:translateY(-2px) }
 
-  .preview-container{ display:none;margin-bottom:12px }
+  .preview-container{ display:none;margin-bottom:12px; position:relative; }
   .preview-image{
     max-width:100%;max-height:320px;border-radius:12px;display:block;margin:0 auto;
-    box-shadow:0 10px 25px rgba(0,0,0,.15)
+    box-shadow:0 10px 25px rgba(0,0,0,.15); cursor: crosshair;
   }
+  .sample-marker{
+    position:absolute; width:16px; height:16px; border-radius:50%;
+    border:2px solid #fff; box-shadow:0 0 0 2px rgba(0,0,0,.25);
+    transform: translate(-50%,-50%); pointer-events:none; display:none;
+  }
+
+  .sampler-card{
+    display:flex; gap:14px; align-items:center;
+    background:#fff; border-radius:14px; padding:12px 14px; margin:10px auto 6px;
+    box-shadow:0 8px 22px rgba(0,0,0,.12); max-width:520px; display:none;
+  }
+  .sampler-swatch{
+    width:64px; height:64px; border-radius:12px; border:2px solid #e5e7eb;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.04);
+  }
+  .sampler-meta{ font-size:14px; line-height:1.45; }
+  .mini-btn{
+    margin-left:8px; padding:4px 8px; border-radius:999px; border:1px solid #e5e7eb;
+    background:#f8f9fa; cursor:pointer; font-weight:600;
+  }
+  .mini-btn:hover{ background:#667eea; color:#fff; border-color:#667eea; }
 
   .palette-container{ display:none }
   .palette{
@@ -74,7 +95,6 @@
   .grid-2{ display:grid;grid-template-columns:1fr 1fr;gap:18px }
   @media (max-width:860px){ .grid-2{ grid-template-columns:1fr } }
 
-  /* Centered comparison section */
   .comparison-wrap{ max-width:940px;margin:0 auto }
   .compatibility-results{
     background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%);border-radius:15px;padding:20px;margin:14px auto;text-align:center;
@@ -84,8 +104,6 @@
   .compatibility-score.excellent{ color:#28a745 }
   .compatibility-score.good{ color:#ffc107 }
   .compatibility-score.poor{ color:#dc3545 }
-
-  /* FLEX instead of grid so both cards center evenly and never "squish" */
   .compatibility-analysis{
     display:flex; flex-wrap:wrap; justify-content:center; gap:18px; margin-top:12px;
   }
@@ -113,7 +131,7 @@
 <body>
   <div class="container">
     <h1>🎨 Color Palette Generator</h1>
-    <p class="subtitle">Extract palettes, compare two images, find bridge colors, export JSON/CSS.</p>
+    <p class="subtitle">Extract palettes, click-to-sample exact colors, compare two images, export JSON/CSS.</p>
 
     <div class="mode-selector">
       <button id="singleModeBtn" class="mode-btn active" aria-pressed="true">Single Image</button>
@@ -134,6 +152,21 @@
 
       <div class="preview-container" id="previewContainer">
         <img id="imagePreview" class="preview-image" alt="Image preview"/>
+        <div id="sampleMarker" class="sample-marker"></div>
+      </div>
+
+      <!-- Sampler panel -->
+      <div id="samplerPanel" class="sampler-card">
+        <div class="sampler-swatch" id="samplerSwatch"></div>
+        <div class="sampler-meta">
+          <div><strong>HEX:</strong> <span id="samplerHex">—</span>
+            <button class="mini-btn" id="copyHexBtn" title="Copy HEX">Copy</button>
+          </div>
+          <div><strong>RGB:</strong> <span id="samplerRgb">—</span>
+            <button class="mini-btn" id="copyRgbBtn" title="Copy RGB">Copy</button>
+          </div>
+          <div class="hint" style="opacity:.7">Tip: click anywhere on the image to sample.</div>
+        </div>
       </div>
 
       <div class="row-center" id="singleControls" style="display:none">
@@ -141,7 +174,6 @@
         <button class="control-btn" data-k="8">8 Colors</button>
         <button class="control-btn" data-k="10">10 Colors</button>
 
-        <!-- Anti palette mode -->
         <div class="row-center">
           <button class="control-btn" id="antiBtn">⚠️ Anti-Palette</button>
           <select id="antiMode" class="control-btn small" title="Anti-palette type">
@@ -238,9 +270,11 @@
 
   <div class="toast" id="toast">Color copied to clipboard!</div>
 
+  <!-- canvases -->
   <canvas id="canvas" style="display:none"></canvas>
   <canvas id="canvas1" style="display:none"></canvas>
   <canvas id="canvas2" style="display:none"></canvas>
+  <canvas id="sampleCanvas" style="display:none"></canvas>
 
 <script>
 /* =================== State & Mode =================== */
@@ -269,6 +303,7 @@ compareModeBtn.addEventListener('click',()=>switchMode('compare'));
 const fileInput=document.getElementById('fileInput');
 const previewContainer=document.getElementById('previewContainer');
 const imagePreview=document.getElementById('imagePreview');
+const sampleMarker=document.getElementById('sampleMarker');
 const loading=document.getElementById('loading');
 const paletteContainer=document.getElementById('paletteContainer');
 const paletteEl=document.getElementById('palette');
@@ -305,12 +340,21 @@ const uploadArea=document.getElementById('uploadArea');
 const uploadArea1=document.getElementById('uploadArea1');
 const uploadArea2=document.getElementById('uploadArea2');
 
+const samplerPanel=document.getElementById('samplerPanel');
+const samplerSwatch=document.getElementById('samplerSwatch');
+const samplerHexEl=document.getElementById('samplerHex');
+const samplerRgbEl=document.getElementById('samplerRgb');
+const copyHexBtn=document.getElementById('copyHexBtn');
+const copyRgbBtn=document.getElementById('copyRgbBtn');
+const sampleCanvas=document.getElementById('sampleCanvas');
+
 /* =================== Reset =================== */
 resetBtn.addEventListener('click', resetAll);
 function resetAll(){
   // single
   currentImage=null; currentColors=[]; currentAntiColors=[];
   fileInput.value=''; imagePreview.src=''; previewContainer.style.display='none';
+  sampleMarker.style.display='none'; samplerPanel.style.display='none';
   paletteEl.innerHTML=''; paletteContainer.style.display='none'; singleControls.style.display='none';
   antiPaletteEl.innerHTML=''; antiWrap.style.display='none';
 
@@ -351,6 +395,7 @@ fileInput1.addEventListener('change',e=>{
 fileInput2.addEventListener('change',e=>{
   const f=e.target.files[0]; if(f&&f.type.startsWith('image/')) loadCompareImage(f,2);
 });
+
 function loadImage(file){
   const reader=new FileReader();
   reader.onload=ev=>{
@@ -360,6 +405,9 @@ function loadImage(file){
       imagePreview.src=ev.target.result;
       previewContainer.style.display='block';
       singleControls.style.display='flex';
+      // prepare sampling canvas & click handler
+      setupImageSampling();
+      // build initial palette
       generatePalette(5);
     };
     img.src=ev.target.result;
@@ -391,6 +439,53 @@ antiBtn.addEventListener('click', ()=> generateAntiPalette());
 exportJsonBtn.addEventListener('click', exportPaletteJSON);
 exportCssBtn.addEventListener('click', exportCssVariables);
 analyzeBtn.addEventListener('click', compareImages);
+
+/* =================== Eyedropper (click-to-sample) =================== */
+function drawToSampleCanvas(img){
+  sampleCanvas.width  = img.naturalWidth;
+  sampleCanvas.height = img.naturalHeight;
+  const sctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+  sctx.clearRect(0,0,sampleCanvas.width,sampleCanvas.height);
+  sctx.drawImage(img, 0, 0, sampleCanvas.width, sampleCanvas.height);
+}
+function setupImageSampling(){
+  drawToSampleCanvas(currentImage);
+  imagePreview.removeEventListener('click', handleImageClick);
+  imagePreview.addEventListener('click', handleImageClick);
+}
+function handleImageClick(ev){
+  if (!currentImage) return;
+  const rect  = imagePreview.getBoundingClientRect();
+  const xDisp = ev.clientX - rect.left;
+  const yDisp = ev.clientY - rect.top;
+
+  const scaleX = currentImage.naturalWidth  / imagePreview.clientWidth;
+  const scaleY = currentImage.naturalHeight / imagePreview.clientHeight;
+  const x = Math.floor(xDisp * scaleX);
+  const y = Math.floor(yDisp * scaleY);
+
+  const sctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+  const data = sctx.getImageData(x, y, 1, 1).data;
+  const [r,g,b,a] = data;
+  if (a === 0) return;
+
+  const hex = rgbToHex(r,g,b).toUpperCase();
+
+  // marker where you clicked
+  sampleMarker.style.left = `${xDisp}px`;
+  sampleMarker.style.top  = `${yDisp}px`;
+  sampleMarker.style.background = hex;
+  sampleMarker.style.display = 'block';
+
+  // panel update
+  samplerSwatch.style.background = hex;
+  samplerHexEl.textContent = hex;
+  samplerRgbEl.textContent = `RGB(${r}, ${g}, ${b})`;
+  samplerPanel.style.display = 'flex';
+
+  copyHexBtn.onclick = () => copyToClipboard(hex);
+  copyRgbBtn.onclick = () => copyToClipboard(`rgb(${r}, ${g}, ${b})`);
+}
 
 /* =================== Extraction (k-means++ in Lab) =================== */
 function extractColors(img,k,canvasId){
@@ -474,59 +569,38 @@ function displayPalette(container,colors){
 }
 
 /* =================== Anti-palette =================== */
-// default selected in the HTML <select id="antiMode"> should be "complement"
-// When rendering:
 function generateAntiPalette(){
-  if (!currentColors.length) return;
-  const mode = antiModeSelect.value;  // 'complement' or 'lowcontrast'
-  if (mode === 'lowcontrast'){
-    antiCaption.textContent = 'These are low-contrast neighbors to your palette (avoid for text/UI on top of your colors).';
+  if(!currentColors.length)return;
+  const mode=antiModeSelect.value;
+  if(mode==='lowcontrast'){
+    antiCaption.textContent='These are low-contrast neighbors to your palette (avoid for text/UI on top of your colors).';
     currentAntiColors = calculateLowContrastAvoid(currentColors);
-  } else {
-    antiCaption.textContent = 'These are complementary “clash” colors relative to your palette.';
+  }else{
+    antiCaption.textContent='These are complementary “clash” colors relative to your palette.';
     currentAntiColors = calculateComplementaryAvoid(currentColors);
   }
-  displayPalette(antiPaletteEl, currentAntiColors);
-  antiWrap.style.display = 'block';
+  displayPalette(antiPaletteEl,currentAntiColors);
+  antiWrap.style.display='block';
 }
-
-
-// Strong, visually distinct complements (ΔE guard)
+// strong complements with ΔE guard
 function calculateComplementaryAvoid(mainColors){
-  const MIN_DE = 35;          // how different it must look (0..100)
-  const L_STEP = 6;           // lightness nudge per attempt
-  const SAT_SCALE = 1.2;      // chroma push per attempt
-
+  const MIN_DE = 35, L_STEP = 6, SAT_SCALE = 1.2;
   const out = [];
   for (const c of mainColors){
     const lab0 = rgb2lab(c.rgb);
-
-    // Start with a true complement in Lab: flip a*, b*, and mirror lightness around 50
     let comp = [ 100 - lab0[0], -lab0[1], -lab0[2] ];
-
-    // If it’s still too close, push it away iteratively
-    let tries = 0;
+    let tries=0;
     while (deltaE76(lab0, comp) < MIN_DE && tries < 8){
-      comp = [
-        clamp(comp[0] + (comp[0] > 50 ? L_STEP : -L_STEP), 0, 100),
-        comp[1] * SAT_SCALE,
-        comp[2] * SAT_SCALE
-      ];
+      comp = [ clamp(comp[0] + (comp[0] > 50 ? L_STEP : -L_STEP), 0, 100),
+               comp[1]*SAT_SCALE, comp[2]*SAT_SCALE ];
       tries++;
     }
-
-    const rgb = lab2rgb(comp);
-    out.push({
-      rgb,
-      hex: rgbToHex(rgb[0], rgb[1], rgb[2]),
-      reason: 'Complementary clash'
-    });
+    const rgb=lab2rgb(comp);
+    out.push({ rgb, hex: rgbToHex(rgb[0],rgb[1],rgb[2]), reason:'Complementary clash' });
   }
   return out;
 }
-
-
-// (B) low-contrast neighbors (for UI)
+// low-contrast neighbors (UI)
 function calculateLowContrastAvoid(mainColors){
   const out=[];
   for(const c of mainColors){
