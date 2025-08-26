@@ -15,7 +15,8 @@ Extract dominant colors from any image with intelligent anti-palette clash detec
 
 ## 🚀 Live Demo
 
-**[Try it live!](https://aquadantheman.github.io/color-palette-generator/)**
+**[Try it live!]([https://aquadantheman.github.io/color-palette-generator/](https://aquadantheman.github.io/color-palettes/
+))**
 
 ## 🛠️ How It Works
 
