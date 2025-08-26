@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Palette from './Palette'
-import { antiComplementary, antiLowContrast, hexOf, rgbToHsv } from '../lib/colors'
+import { antiComplementary, antiLowContrast, hexOf } from '../lib/colors'
 import { extractColorsFromImage } from '../lib/extract'
 import { downloadCSS, downloadJSON } from '../lib/download'
 import type { Swatch } from '../types'
@@ -11,6 +11,7 @@ export default function SingleImage() {
   const [colors, setColors] = useState<Swatch[]>([])
   const [anti, setAnti] = useState<Swatch[]>([])
   const [antiMode, setAntiMode] = useState<'complement'|'lowcontrast'>('complement')
+  const [debugInfo, setDebugInfo] = useState<string>('')
 
   const fileRef = useRef<HTMLInputElement>(null)
   const sampleCanvas = useRef<HTMLCanvasElement>(document.createElement('canvas'))
@@ -18,7 +19,6 @@ export default function SingleImage() {
   const imgRef = useRef<HTMLImageElement>(null)
   const markerRef = useRef<HTMLDivElement>(null)
   const [lockedHex, setLockedHex] = useState<string>()
-  const [lockedRgb, setLockedRgb] = useState<[number, number, number] | undefined>()
   const [showLoupe, setShowLoupe] = useState(false)
   const loupeRef = useRef<HTMLDivElement>(null)
 
@@ -33,73 +33,146 @@ export default function SingleImage() {
     const img = new Image()
     img.onload = () => {
       setImage(img)
-      // draw original into sample canvas
-      const c = sampleCanvas.current
-      c.width = img.naturalWidth; c.height = img.naturalHeight
-      const ctx = c.getContext('2d', { willReadFrequently: true })!
-      ctx.clearRect(0, 0, c.width, c.height)
-      ctx.drawImage(img, 0, 0, c.width, c.height)
-      // initial palette
-      setColors(extractColorsFromImage(img, 5))
-      setAnti([])
+      setDebugInfo(prev => prev + 'Image loaded successfully. ')
+      
+      try {
+        // Test canvas operations
+        const c = sampleCanvas.current
+        c.width = img.naturalWidth
+        c.height = img.naturalHeight
+        const ctx = c.getContext('2d', { willReadFrequently: true })
+        if (!ctx) {
+          setDebugInfo(prev => prev + 'ERROR: Could not get canvas context. ')
+          return
+        }
+        ctx.clearRect(0, 0, c.width, c.height)
+        ctx.drawImage(img, 0, 0, c.width, c.height)
+        setDebugInfo(prev => prev + 'Canvas drawing successful. ')
+        
+        // Test color extraction
+        const testColors = extractColorsFromImage(img, 5)
+        setColors(testColors)
+        setDebugInfo(prev => prev + `Extracted ${testColors.length} colors: ${testColors.map(c => c.hex).join(', ')}. `)
+        setAnti([])
+      } catch (error) {
+        setDebugInfo(prev => prev + `ERROR in image processing: ${error}. `)
+      }
     }
     img.src = imgSrc
   }, [imgSrc])
 
   function generate(k: number) {
     if (!image) return
-    setColors(extractColorsFromImage(image, k))
-    setAnti([])
+    try {
+      const newColors = extractColorsFromImage(image, k)
+      setColors(newColors)
+      setDebugInfo(prev => prev + `Generated ${k} colors: ${newColors.map(c => c.hex).join(', ')}. `)
+      setAnti([])
+    } catch (error) {
+      setDebugInfo(prev => prev + `ERROR generating colors: ${error}. `)
+    }
   }
+
   function buildAnti() {
-    setAnti(antiMode === 'lowcontrast' ? antiLowContrast(colors) : antiComplementary(colors))
+    try {
+      const antiColors = antiMode === 'lowcontrast' ? antiLowContrast(colors) : antiComplementary(colors)
+      setAnti(antiColors)
+      setDebugInfo(prev => prev + `Anti-palette generated: ${antiColors.map(c => c.hex).join(', ')}. `)
+    } catch (error) {
+      setDebugInfo(prev => prev + `ERROR generating anti-palette: ${error}. `)
+    }
   }
 
   function handleMouseMove(e: React.MouseEvent) {
     if (!image || !imgRef.current || !loupeCanvas.current || !loupeRef.current) return
-    const imgEl = imgRef.current
-    const rect = imgEl.getBoundingClientRect()
-    const xDisp = e.clientX - rect.left, yDisp = e.clientY - rect.top
-    const sx = Math.max(0, Math.min(sampleCanvas.current.width - 15, Math.floor(xDisp * image.naturalWidth / imgEl.clientWidth) - 7))
-    const sy = Math.max(0, Math.min(sampleCanvas.current.height - 15, Math.floor(yDisp * image.naturalHeight / imgEl.clientHeight) - 7))
+    
+    try {
+      const imgEl = imgRef.current
+      const rect = imgEl.getBoundingClientRect()
+      const xDisp = e.clientX - rect.left, yDisp = e.clientY - rect.top
+      const sx = Math.max(0, Math.min(sampleCanvas.current.width - 15, Math.floor(xDisp * image.naturalWidth / imgEl.clientWidth) - 7))
+      const sy = Math.max(0, Math.min(sampleCanvas.current.height - 15, Math.floor(yDisp * image.naturalHeight / imgEl.clientHeight) - 7))
 
-    const lctx = loupeCanvas.current.getContext('2d', { willReadFrequently: true })!
-    lctx.imageSmoothingEnabled = false
-    lctx.clearRect(0, 0, 96, 96)
-    lctx.drawImage(sampleCanvas.current, sx, sy, 15, 15, 0, 0, 96, 96)
+      const lctx = loupeCanvas.current.getContext('2d', { willReadFrequently: true })
+      if (!lctx) {
+        setDebugInfo(prev => prev + 'ERROR: Could not get loupe canvas context. ')
+        return
+      }
+      
+      lctx.imageSmoothingEnabled = false
+      lctx.clearRect(0, 0, 96, 96)
+      lctx.drawImage(sampleCanvas.current, sx, sy, 15, 15, 0, 0, 96, 96)
 
-    loupeRef.current.style.left = `${xDisp + 14}px`
-    loupeRef.current.style.top = `${yDisp + 14}px`
-    setShowLoupe(true)
+      loupeRef.current.style.left = `${xDisp + 14}px`
+      loupeRef.current.style.top = `${yDisp + 14}px`
+      setShowLoupe(true)
 
-    const sctx = sampleCanvas.current.getContext('2d', { willReadFrequently: true })!
-    const d = sctx.getImageData(sx + 7, sy + 7, 1, 1).data
-    const hex = hexOf([d[0], d[1], d[2]])
-    loupeRef.current.dataset.hex = hex
+      const sctx = sampleCanvas.current.getContext('2d', { willReadFrequently: true })
+      if (!sctx) {
+        setDebugInfo(prev => prev + 'ERROR: Could not get sample canvas context. ')
+        return
+      }
+      
+      const d = sctx.getImageData(sx + 7, sy + 7, 1, 1).data
+      const hex = hexOf([d[0], d[1], d[2]])
+      loupeRef.current.dataset.hex = hex
+    } catch (error) {
+      setDebugInfo(prev => prev + `ERROR in mouse move: ${error}. `)
+    }
   }
 
-  function handleLeave() { setShowLoupe(false) }
+  function handleLeave() { 
+    setShowLoupe(false) 
+  }
 
   function handleClick(e: React.MouseEvent) {
     if (!image || !imgRef.current || !markerRef.current) return
-    const imgEl = imgRef.current
-    const rect = imgEl.getBoundingClientRect()
-    const xDisp = e.clientX - rect.left, yDisp = e.clientY - rect.top
-    const x = Math.floor(xDisp * image.naturalWidth / imgEl.clientWidth)
-    const y = Math.floor(yDisp * image.naturalHeight / imgEl.clientHeight)
-    const sctx = sampleCanvas.current.getContext('2d', { willReadFrequently: true })!
-    const d = sctx.getImageData(x, y, 1, 1).data
-    const hex = hexOf([d[0], d[1], d[2]])
-    setLockedHex(hex); setLockedRgb([d[0], d[1], d[2]])
-    markerRef.current.style.left = `${xDisp}px`
-    markerRef.current.style.top = `${yDisp}px`
-    markerRef.current.style.background = hex
-    markerRef.current.style.display = 'block'
+    
+    try {
+      const imgEl = imgRef.current
+      const rect = imgEl.getBoundingClientRect()
+      const xDisp = e.clientX - rect.left, yDisp = e.clientY - rect.top
+      const x = Math.floor(xDisp * image.naturalWidth / imgEl.clientWidth)
+      const y = Math.floor(yDisp * image.naturalHeight / imgEl.clientHeight)
+      
+      const sctx = sampleCanvas.current.getContext('2d', { willReadFrequently: true })
+      if (!sctx) {
+        setDebugInfo(prev => prev + 'ERROR: Could not get canvas context for click. ')
+        return
+      }
+      
+      const d = sctx.getImageData(x, y, 1, 1).data
+      const hex = hexOf([d[0], d[1], d[2]])
+      
+      setLockedHex(hex)
+      markerRef.current.style.left = `${xDisp}px`
+      markerRef.current.style.top = `${yDisp}px`
+      markerRef.current.style.background = hex
+      markerRef.current.style.display = 'block'
+      
+      setDebugInfo(prev => prev + `Clicked color: ${hex} RGB(${d[0]}, ${d[1]}, ${d[2]}). `)
+    } catch (error) {
+      setDebugInfo(prev => prev + `ERROR in click handler: ${error}. `)
+    }
   }
 
   return (
     <div className="card max-w-5xl mx-auto p-6">
       <h2 className="text-xl font-bold text-center mb-3">Single Image</h2>
+
+      {/* Debug Info */}
+      {debugInfo && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <h4 className="font-semibold text-yellow-800">Debug Info:</h4>
+          <p className="text-sm text-yellow-700">{debugInfo}</p>
+          <button 
+            className="text-xs text-yellow-600 underline"
+            onClick={() => setDebugInfo('')}
+          >
+            Clear debug
+          </button>
+        </div>
+      )}
 
       {/* Upload */}
       <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center mb-4 bg-gray-50"
@@ -139,7 +212,7 @@ export default function SingleImage() {
           {[5,8,10].map(k => (
             <button key={k} className="btn" onClick={() => generate(k)}>{k} Colors</button>
           ))}
-          <button className="btn" onClick={buildAnti}>⚠️ Anti-Palette</button>
+          <button className="btn" onClick={buildAnti}>Anti-Palette</button>
           <select className="btn py-2" value={antiMode} onChange={e => setAntiMode(e.target.value as any)}>
             <option value="complement">Complementary clash</option>
             <option value="lowcontrast">Low-contrast (UI)</option>
@@ -155,7 +228,7 @@ export default function SingleImage() {
           <Palette colors={colors} />
           {anti.length > 0 && (
             <div>
-              <h3 className="text-center text-red-500 font-bold mb-1">🚫 Colors to Avoid</h3>
+              <h3 className="text-center text-red-500 font-bold mb-1">Colors to Avoid</h3>
               <p className="text-center text-sm text-gray-600 mb-2">
                 {antiMode === 'lowcontrast'
                   ? 'Low-contrast neighbors to your palette (avoid for text/UI atop these colors).'
@@ -164,6 +237,13 @@ export default function SingleImage() {
               <Palette colors={anti} danger />
             </div>
           )}
+        </div>
+      )}
+
+      {/* Locked color info */}
+      {lockedHex && (
+        <div className="mt-4 p-3 bg-gray-50 rounded-xl text-center">
+          <p className="text-sm">Sampled: <strong>{lockedHex}</strong></p>
         </div>
       )}
     </div>
