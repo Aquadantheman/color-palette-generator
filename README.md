@@ -81,6 +81,18 @@ Beautiful, responsive color swatches showing the dominant colors from your image
 ### Anti-Palette
 Unique feature showing problematic color combinations with visual warnings.
 
+### Update
+# 🎨 Color Palette Generator (React + Tailwind)
+
+Extract dominant colors, hover a loupe to preview pixel color, click to sample and copy, build anti-palettes (Complement vs Low-contrast), compare two images, and export JSON/CSS.
+
+## Quick start
+
+```bash
+npm i
+npm run dev
+
+
 ## 🤝 Contributing
 
 Contributions are welcome! Here are some ideas for enhancements:
