@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Palette from './Palette'
-import { analyze, antiComplementary, antiLowContrast, hexOf, rgbToHsv } from '../lib/colors'
+import { antiComplementary, antiLowContrast, hexOf, rgbToHsv } from '../lib/colors'
 import { extractColorsFromImage } from '../lib/extract'
 import { downloadCSS, downloadJSON } from '../lib/download'
 import type { Swatch } from '../types'
@@ -159,7 +159,7 @@ export default function SingleImage() {
               <p className="text-center text-sm text-gray-600 mb-2">
                 {antiMode === 'lowcontrast'
                   ? 'Low-contrast neighbors to your palette (avoid for text/UI atop these colors).'
-                  : 'Complementary “clash” colors relative to your palette.'}
+                  : 'Complementary "clash" colors relative to your palette.'}
               </p>
               <Palette colors={anti} danger />
             </div>
@@ -169,4 +169,3 @@ export default function SingleImage() {
     </div>
   )
 }
-
