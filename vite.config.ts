@@ -3,5 +3,9 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: './', // Use relative paths - works with any repo name
+  base: '/color-palettes/',
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+  },
 })
