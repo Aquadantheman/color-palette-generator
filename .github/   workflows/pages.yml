@@ -5,7 +5,6 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-# Prevent simultaneous Pages deploys
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -37,15 +36,13 @@ jobs:
       - name: Build
         run: npm run build
 
-      # SPA fallback so deep links work on Pages
-      - name: Add 404 fallback
+      - name: Add SPA fallback
         run: cp dist/index.html dist/404.html
 
-      # Create the special "github-pages" artifact
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./dist   # 👈 deploy only the built dist folder
 
   deploy:
     needs: build
