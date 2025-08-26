@@ -11,10 +11,8 @@
     background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
     min-height:100vh; padding:20px;
   }
-  .container{
-    max-width:980px;margin:0 auto;background:rgba(255,255,255,.95);
-    border-radius:20px;padding:30px;box-shadow:0 20px 40px rgba(0,0,0,.1);
-  }
+  .container{ max-width:980px;margin:0 auto;background:rgba(255,255,255,.95);
+    border-radius:20px;padding:30px;box-shadow:0 20px 40px rgba(0,0,0,.1); }
   h1{ text-align:center;color:#333;margin-bottom:16px;font-size:2.2rem;font-weight:700 }
   .subtitle{ text-align:center;color:#666;margin-bottom:18px }
 
@@ -58,15 +56,36 @@
     transform: translate(-50%,-50%); pointer-events:none; display:none;
   }
 
+  /* Loupe */
+  .loupe{
+    position:absolute; width:96px; height:96px; border-radius:50%;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), inset 0 0 0 2px rgba(255,255,255,.9);
+    background:#fff; display:none; pointer-events:none; z-index:5;
+    overflow:hidden;
+  }
+  .loupe canvas{ width:100%; height:100%; image-rendering: pixelated; }
+  .loupe-cross{
+    position:absolute; left:50%; top:50%; width:100%; height:100%; pointer-events:none;
+    transform:translate(-50%,-50%);
+  }
+  .loupe-cross::before, .loupe-cross::after{
+    content:""; position:absolute; background:rgba(255,255,255,.9);
+  }
+  .loupe-cross::before{ width:1px; height:100%; left:50%; top:0; transform:translateX(-.5px); }
+  .loupe-cross::after{ height:1px; width:100%; top:50%; left:0; transform:translateY(-.5px); }
+
+  .loupe-info{
+    position:absolute; transform: translate(8px, -50%); left:100%; top:50%;
+    background:#111; color:#fff; padding:8px 10px; border-radius:10px; font-size:12px;
+    box-shadow:0 6px 18px rgba(0,0,0,.25); white-space:nowrap;
+  }
+
   .sampler-card{
     display:flex; gap:14px; align-items:center;
     background:#fff; border-radius:14px; padding:12px 14px; margin:10px auto 6px;
     box-shadow:0 8px 22px rgba(0,0,0,.12); max-width:520px; display:none;
   }
-  .sampler-swatch{
-    width:64px; height:64px; border-radius:12px; border:2px solid #e5e7eb;
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,.04);
-  }
+  .sampler-swatch{ width:64px; height:64px; border-radius:12px; border:2px solid #e5e7eb; box-shadow: inset 0 0 0 1px rgba(0,0,0,.04); }
   .sampler-meta{ font-size:14px; line-height:1.45; }
   .mini-btn{
     margin-left:8px; padding:4px 8px; border-radius:999px; border:1px solid #e5e7eb;
@@ -75,14 +94,10 @@
   .mini-btn:hover{ background:#667eea; color:#fff; border-color:#667eea; }
 
   .palette-container{ display:none }
-  .palette{
-    display:flex;width:100%;height:120px;border-radius:15px;overflow:hidden;
-    box-shadow:0 10px 30px rgba(0,0,0,.2);margin:0 auto 12px
-  }
-  .color-swatch{
-    flex:1;min-width:0;display:flex;align-items:end;justify-content:center;padding:12px 8px;
-    font-weight:700;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:pointer;transition:transform .15s ease;position:relative
-  }
+  .palette{ display:flex;width:100%;height:120px;border-radius:15px;overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);margin:0 auto 12px }
+  .color-swatch{ flex:1;min-width:0;display:flex;align-items:end;justify-content:center;padding:12px 8px;
+    font-weight:700;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:pointer;transition:transform .15s ease;position:relative }
   .color-swatch:hover{ transform:scale(1.04);z-index:1 }
   .color-info{ text-align:center; max-width:100%; overflow:hidden }
   .hex-code{ font-size:13px;margin-bottom:2px;letter-spacing:.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
@@ -97,41 +112,26 @@
 
   .comparison-wrap{ max-width:940px;margin:0 auto }
   .compatibility-results{
-    background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%);border-radius:15px;padding:20px;margin:14px auto;text-align:center;
-    max-width:760px
-  }
+    background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%);border-radius:15px;padding:20px;margin:14px auto;text-align:center; max-width:760px }
   .compatibility-score{ font-size:2.4rem;font-weight:800;margin-bottom:6px }
-  .compatibility-score.excellent{ color:#28a745 }
-  .compatibility-score.good{ color:#ffc107 }
-  .compatibility-score.poor{ color:#dc3545 }
-  .compatibility-analysis{
-    display:flex; flex-wrap:wrap; justify-content:center; gap:18px; margin-top:12px;
-  }
-  .palette-card{
-    background:#fff;border-radius:16px;padding:12px 12px 16px;
-    box-shadow:0 10px 25px rgba(0,0,0,.12);
-    width: clamp(320px, 44vw, 560px);
-  }
+  .compatibility-score.excellent{ color:#28a745 } .compatibility-score.good{ color:#ffc107 } .compatibility-score.poor{ color:#dc3545 }
+  .compatibility-analysis{ display:flex; flex-wrap:wrap; justify-content:center; gap:18px; margin-top:12px; }
+  .palette-card{ background:#fff;border-radius:16px;padding:12px 12px 16px; box-shadow:0 10px 25px rgba(0,0,0,.12); width: clamp(320px, 44vw, 560px); }
   .palette-card h4{ text-align:center;margin-bottom:8px;color:#333 }
 
   .row-center{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap }
 
-  .toast{
-    position:fixed;top:18px;right:18px;background:#28a745;color:#fff;padding:12px 18px;border-radius:10px;
-    display:none;z-index:1000;font-weight:700
-  }
+  .toast{ position:fixed;top:18px;right:18px;background:#28a745;color:#fff;padding:12px 18px;border-radius:10px;
+    display:none;z-index:1000;font-weight:700 }
   .loading{ text-align:center;color:#667eea;display:none;margin:6px 0 10px }
-  .spinner{
-    display:inline-block;width:18px;height:18px;border:3px solid #f3f3f3;border-top:3px solid #667eea;border-radius:50%;
-    animation:spin 1s linear infinite;margin-right:8px
-  }
+  .spinner{ display:inline-block;width:18px;height:18px;border:3px solid #f3f3f3;border-top:3px solid #667eea;border-radius:50%; animation:spin 1s linear infinite;margin-right:8px }
   @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
   <div class="container">
     <h1>🎨 Color Palette Generator</h1>
-    <p class="subtitle">Extract palettes, click-to-sample exact colors, compare two images, export JSON/CSS.</p>
+    <p class="subtitle">Extract palettes, hover to loupe + live color, click to sample, compare images, export JSON/CSS.</p>
 
     <div class="mode-selector">
       <button id="singleModeBtn" class="mode-btn active" aria-pressed="true">Single Image</button>
@@ -153,9 +153,16 @@
       <div class="preview-container" id="previewContainer">
         <img id="imagePreview" class="preview-image" alt="Image preview"/>
         <div id="sampleMarker" class="sample-marker"></div>
+
+        <!-- Loupe -->
+        <div id="loupe" class="loupe">
+          <canvas id="loupeCanvas" width="96" height="96"></canvas>
+          <div class="loupe-cross"></div>
+          <div id="loupeInfo" class="loupe-info">—</div>
+        </div>
       </div>
 
-      <!-- Sampler panel -->
+      <!-- Sampler panel (locked-on-click) -->
       <div id="samplerPanel" class="sampler-card">
         <div class="sampler-swatch" id="samplerSwatch"></div>
         <div class="sampler-meta">
@@ -165,7 +172,7 @@
           <div><strong>RGB:</strong> <span id="samplerRgb">—</span>
             <button class="mini-btn" id="copyRgbBtn" title="Copy RGB">Copy</button>
           </div>
-          <div class="hint" style="opacity:.7">Tip: click anywhere on the image to sample.</div>
+          <div class="hint" style="opacity:.7">Click the image to lock the color.</div>
         </div>
       </div>
 
@@ -304,6 +311,9 @@ const fileInput=document.getElementById('fileInput');
 const previewContainer=document.getElementById('previewContainer');
 const imagePreview=document.getElementById('imagePreview');
 const sampleMarker=document.getElementById('sampleMarker');
+const loupe=document.getElementById('loupe');
+const loupeCanvas=document.getElementById('loupeCanvas');
+const loupeInfo=document.getElementById('loupeInfo');
 const loading=document.getElementById('loading');
 const paletteContainer=document.getElementById('paletteContainer');
 const paletteEl=document.getElementById('palette');
@@ -355,6 +365,7 @@ function resetAll(){
   currentImage=null; currentColors=[]; currentAntiColors=[];
   fileInput.value=''; imagePreview.src=''; previewContainer.style.display='none';
   sampleMarker.style.display='none'; samplerPanel.style.display='none';
+  loupe.style.display='none';
   paletteEl.innerHTML=''; paletteContainer.style.display='none'; singleControls.style.display='none';
   antiPaletteEl.innerHTML=''; antiWrap.style.display='none';
 
@@ -405,9 +416,9 @@ function loadImage(file){
       imagePreview.src=ev.target.result;
       previewContainer.style.display='block';
       singleControls.style.display='flex';
-      // prepare sampling canvas & click handler
+      // prepare sampling canvas & handlers
       setupImageSampling();
-      // build initial palette
+      // first palette
       generatePalette(5);
     };
     img.src=ev.target.result;
@@ -440,7 +451,7 @@ exportJsonBtn.addEventListener('click', exportPaletteJSON);
 exportCssBtn.addEventListener('click', exportCssVariables);
 analyzeBtn.addEventListener('click', compareImages);
 
-/* =================== Eyedropper (click-to-sample) =================== */
+/* =================== Eyedropper + Live Loupe =================== */
 function drawToSampleCanvas(img){
   sampleCanvas.width  = img.naturalWidth;
   sampleCanvas.height = img.naturalHeight;
@@ -450,41 +461,75 @@ function drawToSampleCanvas(img){
 }
 function setupImageSampling(){
   drawToSampleCanvas(currentImage);
-  imagePreview.removeEventListener('click', handleImageClick);
-  imagePreview.addEventListener('click', handleImageClick);
-}
-function handleImageClick(ev){
-  if (!currentImage) return;
-  const rect  = imagePreview.getBoundingClientRect();
-  const xDisp = ev.clientX - rect.left;
-  const yDisp = ev.clientY - rect.top;
 
-  const scaleX = currentImage.naturalWidth  / imagePreview.clientWidth;
-  const scaleY = currentImage.naturalHeight / imagePreview.clientHeight;
-  const x = Math.floor(xDisp * scaleX);
-  const y = Math.floor(yDisp * scaleY);
+  // remove previous listeners to avoid dupes
+  imagePreview.onmousemove = null;
+  imagePreview.onmouseleave = null;
+  imagePreview.onclick = null;
 
-  const sctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
-  const data = sctx.getImageData(x, y, 1, 1).data;
-  const [r,g,b,a] = data;
-  if (a === 0) return;
+  const loupeCtx = loupeCanvas.getContext('2d', { willReadFrequently:true });
+  const zoom = 7;        // magnification scale
+  const patch = 15;      // source pixels per side
+  const half = Math.floor(patch/2);
 
-  const hex = rgbToHex(r,g,b).toUpperCase();
+  imagePreview.onmousemove = (ev)=>{
+    const rect = imagePreview.getBoundingClientRect();
+    const xDisp = ev.clientX - rect.left;
+    const yDisp = ev.clientY - rect.top;
 
-  // marker where you clicked
-  sampleMarker.style.left = `${xDisp}px`;
-  sampleMarker.style.top  = `${yDisp}px`;
-  sampleMarker.style.background = hex;
-  sampleMarker.style.display = 'block';
+    const scaleX = currentImage.naturalWidth  / imagePreview.clientWidth;
+    const scaleY = currentImage.naturalHeight / imagePreview.clientHeight;
+    const sx = Math.max(0, Math.min(sampleCanvas.width  - patch, Math.floor(xDisp * scaleX) - half));
+    const sy = Math.max(0, Math.min(sampleCanvas.height - patch, Math.floor(yDisp * scaleY) - half));
 
-  // panel update
-  samplerSwatch.style.background = hex;
-  samplerHexEl.textContent = hex;
-  samplerRgbEl.textContent = `RGB(${r}, ${g}, ${b})`;
-  samplerPanel.style.display = 'flex';
+    // draw magnified patch
+    loupeCtx.imageSmoothingEnabled = false;
+    loupeCtx.clearRect(0,0,loupeCanvas.width,loupeCanvas.height);
+    loupeCtx.drawImage(sampleCanvas, sx, sy, patch, patch, 0, 0, loupeCanvas.width, loupeCanvas.height);
 
-  copyHexBtn.onclick = () => copyToClipboard(hex);
-  copyRgbBtn.onclick = () => copyToClipboard(`rgb(${r}, ${g}, ${b})`);
+    // show loupe near cursor
+    const offset = 14;
+    loupe.style.left = `${xDisp + offset}px`;
+    loupe.style.top  = `${yDisp + offset}px`;
+    loupe.style.display = 'block';
+
+    // live color (center pixel)
+    const sctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+    const centerData = sctx.getImageData(sx + half, sy + half, 1, 1).data;
+    const [r,g,b] = centerData;
+    const hex = rgbToHex(r,g,b).toUpperCase();
+    loupeInfo.textContent = `${hex}  •  RGB(${r}, ${g}, ${b})`;
+  };
+
+  imagePreview.onmouseleave = ()=>{
+    loupe.style.display = 'none';
+  };
+
+  imagePreview.onclick = (ev)=>{
+    const rect = imagePreview.getBoundingClientRect();
+    const xDisp = ev.clientX - rect.left;
+    const yDisp = ev.clientY - rect.top;
+    const scaleX = currentImage.naturalWidth  / imagePreview.clientWidth;
+    const scaleY = currentImage.naturalHeight / imagePreview.clientHeight;
+    const x = Math.floor(xDisp * scaleX);
+    const y = Math.floor(yDisp * scaleY);
+    const sctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+    const data = sctx.getImageData(x, y, 1, 1).data;
+    const [r,g,b,a] = data; if(a===0) return;
+
+    const hex = rgbToHex(r,g,b).toUpperCase();
+    sampleMarker.style.left = `${xDisp}px`;
+    sampleMarker.style.top  = `${yDisp}px`;
+    sampleMarker.style.background = hex;
+    sampleMarker.style.display = 'block';
+
+    samplerSwatch.style.background = hex;
+    samplerHexEl.textContent = hex;
+    samplerRgbEl.textContent = `RGB(${r}, ${g}, ${b})`;
+    samplerPanel.style.display = 'flex';
+    copyHexBtn.onclick = () => copyToClipboard(hex);
+    copyRgbBtn.onclick = () => copyToClipboard(`rgb(${r}, ${g}, ${b})`);
+  };
 }
 
 /* =================== Extraction (k-means++ in Lab) =================== */
@@ -582,7 +627,6 @@ function generateAntiPalette(){
   displayPalette(antiPaletteEl,currentAntiColors);
   antiWrap.style.display='block';
 }
-// strong complements with ΔE guard
 function calculateComplementaryAvoid(mainColors){
   const MIN_DE = 35, L_STEP = 6, SAT_SCALE = 1.2;
   const out = [];
@@ -600,7 +644,6 @@ function calculateComplementaryAvoid(mainColors){
   }
   return out;
 }
-// low-contrast neighbors (UI)
 function calculateLowContrastAvoid(mainColors){
   const out=[];
   for(const c of mainColors){
