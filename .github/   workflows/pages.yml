@@ -33,30 +33,34 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Build
+      - name: Build (Vite)
         run: npm run build
 
-      # 🔎 Sanity checks to prevent deploying the dev HTML
+      # 🔎 Show what Vite output actually looks like
+      - name: List dist
+        run: ls -R dist
+
+      # ✅ Guards that catch the exact issue you're seeing
       - name: Verify Vite output
         run: |
           test -f dist/index.html || (echo "❌ dist/index.html missing" && exit 1)
           if grep -q "/src/main.tsx" dist/index.html; then
-            echo "❌ Built index.html still references /src/main.tsx (dev HTML)."
+            echo "❌ dist/index.html still references /src/main.tsx (dev HTML). Check build step."
             exit 1
           fi
           if ! grep -q "/color-palettes/assets/" dist/index.html; then
-            echo "❌ Built index.html does not reference /color-palettes/assets/; check vite.config.ts base."
+            echo "❌ dist/index.html does not reference /color-palettes/assets/. Check vite.config.ts base."
             exit 1
           fi
-          echo "✅ Vite output looks good."
+          echo "✅ dist/index.html looks correct."
 
       - name: Add SPA fallback
         run: cp dist/index.html dist/404.html
 
-      - name: Upload Pages artifact
+      - name: Upload Pages artifact (dist only)
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist  # 🚨 deploy *only* the built files
+          path: ./dist
 
   deploy:
     needs: build
