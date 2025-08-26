@@ -30,26 +30,33 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Install deps
-        run: npm ci
+      # Works whether or not you committed package-lock.json
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Build (Vite)
         run: npm run build
 
-      # 🔎 Show what Vite output actually looks like
       - name: List dist
-        run: ls -R dist
+        run: ls -la dist && echo && head -n 50 dist/index.html || true
 
-      # ✅ Guards that catch the exact issue you're seeing
+      # Guards that catch the white-page problem
       - name: Verify Vite output
         run: |
           test -f dist/index.html || (echo "❌ dist/index.html missing" && exit 1)
           if grep -q "/src/main.tsx" dist/index.html; then
-            echo "❌ dist/index.html still references /src/main.tsx (dev HTML). Check build step."
+            echo "❌ Built index.html still references /src/main.tsx (dev HTML)."
+            echo "   Check that Vite actually built, and that vite.config.ts is committed with base set."
             exit 1
           fi
           if ! grep -q "/color-palettes/assets/" dist/index.html; then
-            echo "❌ dist/index.html does not reference /color-palettes/assets/. Check vite.config.ts base."
+            echo "❌ Built index.html does not reference /color-palettes/assets/."
+            echo "   Make sure vite.config.ts has: base: '/color-palettes/'"
             exit 1
           fi
           echo "✅ dist/index.html looks correct."
