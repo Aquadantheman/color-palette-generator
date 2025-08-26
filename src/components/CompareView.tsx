@@ -60,7 +60,7 @@ export default function CompareView() {
                      onChange={e => { const f = e.target.files?.[0]; if (f) load(f, which as 1|2) }} />
             </div>
             {(which === 1 ? src1 : src2) && (
-              <img src={(which === 1 ? src1 : src2)!} className="mx-auto max-h-64 rounded-xl shadow-xl mt-3" />
+              <img src={(which === 1 ? src1 : src2)!} className="mx-auto max-h-64 rounded-xl shadow-xl mt-3" alt={`Image ${which}`} />
             )}
           </div>
         ))}
@@ -110,4 +110,3 @@ export default function CompareView() {
     </div>
   )
 }
-
