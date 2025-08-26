@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/color-palettes/',  // 👈 must match your repo name
+  base: '/color-palettes/', // <-- exact repo name, with leading+trailing slash
 })
