@@ -38,7 +38,7 @@ Compare two images side-by-side, generate “anti-palettes” (complementary or 
 ## 🖼️ How It Works
 
 1. **Image Processing** – Your image is downscaled and drawn to an HTML5 canvas.  
-2. **K-Means Clustering** – Colors are grouped into k clusters (5, 8, or 10).  
+2. **Color Extraction** – Colors are sampled from a grid across the image and selected for maximum diversity to ensure broad spectrum representation.
 3. **Palette Sorting** – Colors are ordered by hue, saturation, and brightness for consistency.  
 4. **Anti-Palette Detection** – Generates either:
    - **Complements** (colors that fight for attention), or  
