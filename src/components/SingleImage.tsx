@@ -16,10 +16,9 @@ export default function SingleImage() {
   const sampleCanvas = useRef<HTMLCanvasElement>(document.createElement('canvas'))
   const loupeCanvas = useRef<HTMLCanvasElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
-  const markerRef = useRef<HTMLDivElement>(null)
-  const [lockedHex, setLockedHex] = useState<string>()
-  const [showLoupe, setShowLoupe] = useState(false)
-  const loupeRef = useRef<HTMLDivElement>(null)
+  const [currentHex, setCurrentHex] = useState<string>('#000000')
+  const [currentRgb, setCurrentRgb] = useState<[number, number, number]>([0, 0, 0])
+  const [isHovering, setIsHovering] = useState(false)
 
   function onFile(file: File) {
     const reader = new FileReader()
@@ -55,7 +54,7 @@ export default function SingleImage() {
   }
 
   function handleMouseMove(e: React.MouseEvent) {
-    if (!image || !imgRef.current || !loupeCanvas.current || !loupeRef.current) return
+    if (!image || !imgRef.current || !loupeCanvas.current) return
     
     const imgEl = imgRef.current
     const rect = imgEl.getBoundingClientRect()
@@ -68,43 +67,24 @@ export default function SingleImage() {
     lctx.clearRect(0, 0, 96, 96)
     lctx.drawImage(sampleCanvas.current, sx, sy, 15, 15, 0, 0, 96, 96)
 
-    loupeRef.current.style.left = `${xDisp + 14}px`
-    loupeRef.current.style.top = `${yDisp + 14}px`
-    setShowLoupe(true)
-
     const sctx = sampleCanvas.current.getContext('2d', { willReadFrequently: true })!
     const d = sctx.getImageData(sx + 7, sy + 7, 1, 1).data
     const hex = hexOf([d[0], d[1], d[2]])
-    loupeRef.current.dataset.hex = hex
+    setCurrentHex(hex)
+    setCurrentRgb([d[0], d[1], d[2]])
+    setIsHovering(true)
   }
 
   function handleLeave() { 
-    setShowLoupe(false) 
+    setIsHovering(false)
   }
 
-  function handleClick(e: React.MouseEvent) {
-    if (!image || !imgRef.current || !markerRef.current) return
-    
-    const imgEl = imgRef.current
-    const rect = imgEl.getBoundingClientRect()
-    const xDisp = e.clientX - rect.left, yDisp = e.clientY - rect.top
-    const x = Math.floor(xDisp * image.naturalWidth / imgEl.clientWidth)
-    const y = Math.floor(yDisp * image.naturalHeight / imgEl.clientHeight)
-    
-    const sctx = sampleCanvas.current.getContext('2d', { willReadFrequently: true })!
-    const d = sctx.getImageData(x, y, 1, 1).data
-    const hex = hexOf([d[0], d[1], d[2]])
-    
-    setLockedHex(hex)
-    markerRef.current.style.left = `${xDisp}px`
-    markerRef.current.style.top = `${yDisp}px`
-    markerRef.current.style.background = hex
-    markerRef.current.style.display = 'block'
-    navigator.clipboard.writeText(hex)
+  function handleClick() {
+    navigator.clipboard.writeText(currentHex)
   }
 
   return (
-    <div className="card max-w-5xl mx-auto p-6">
+    <div className="card max-w-7xl mx-auto p-6">
       <h2 className="text-xl font-bold text-center mb-3">Single Image</h2>
 
       <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center mb-4 bg-gray-50"
@@ -118,20 +98,73 @@ export default function SingleImage() {
       </div>
 
       {imgSrc && (
-        <div className="relative mb-4">
-          <img ref={imgRef} src={imgSrc} alt="preview" className="mx-auto max-h-80 rounded-xl shadow-xl cursor-crosshair"
-               onMouseMove={handleMouseMove} onMouseLeave={handleLeave} onClick={handleClick} />
-          <div ref={markerRef} className="hidden absolute w-4 h-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_2px_rgba(0,0,0,0.25)]"></div>
+        <div className="flex gap-6 mb-4">
+          {/* Main Image */}
+          <div className="flex-1">
+            <img 
+              ref={imgRef} 
+              src={imgSrc} 
+              alt="preview" 
+              className="w-full max-h-96 object-contain rounded-xl shadow-xl cursor-crosshair"
+              onMouseMove={handleMouseMove} 
+              onMouseLeave={handleLeave} 
+              onClick={handleClick} 
+            />
+          </div>
 
-          <div ref={loupeRef}
-               className={`absolute w-24 h-24 rounded-full overflow-hidden shadow-xl ring-2 ring-white ${showLoupe ? 'block' : 'hidden'}`}>
-            <canvas ref={loupeCanvas} width={96} height={96} style={{ imageRendering: 'pixelated', width: '100%', height: '100%' }} />
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute inset-x-1/2 -translate-x-1/2 w-px h-full bg-white/90"></div>
-              <div className="absolute inset-y-1/2 -translate-y-1/2 h-px w-full bg-white/90"></div>
+          {/* Sidebar with Loupe and Color Info */}
+          <div className="w-64 space-y-4">
+            {/* Loupe */}
+            <div className="bg-white rounded-xl p-4 shadow-lg">
+              <h3 className="font-semibold mb-3 text-center">Pixel Loupe</h3>
+              <div className="flex justify-center mb-3">
+                <div className="w-24 h-24 rounded-full overflow-hidden shadow-lg ring-2 ring-gray-200">
+                  <canvas 
+                    ref={loupeCanvas} 
+                    width={96} 
+                    height={96} 
+                    style={{ imageRendering: 'pixelated', width: '100%', height: '100%' }} 
+                  />
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute inset-x-1/2 -translate-x-1/2 w-px h-full bg-white/90"></div>
+                    <div className="absolute inset-y-1/2 -translate-y-1/2 h-px w-full bg-white/90"></div>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-center text-gray-500">
+                {isHovering ? 'Hover over image to sample colors' : 'Move mouse over image'}
+              </p>
             </div>
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 rounded-lg bg-black text-white text-[11px] px-2 py-1 whitespace-nowrap">
-              {loupeRef.current?.dataset.hex ?? '—'}
+
+            {/* Color Info */}
+            <div className="bg-white rounded-xl p-4 shadow-lg">
+              <h3 className="font-semibold mb-3 text-center">Current Color</h3>
+              <div 
+                className="w-full h-16 rounded-lg border-2 border-gray-200 mb-3 cursor-pointer transition-all hover:scale-105"
+                style={{ backgroundColor: currentHex }}
+                onClick={handleClick}
+                title="Click to copy hex code"
+              />
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">HEX:</span>
+                  <button 
+                    className="font-mono bg-gray-100 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+                    onClick={handleClick}
+                  >
+                    {currentHex}
+                  </button>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">RGB:</span>
+                  <span className="font-mono">
+                    ({currentRgb[0]}, {currentRgb[1]}, {currentRgb[2]})
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-center text-gray-500 mt-3">
+                Click color or hex to copy
+              </p>
             </div>
           </div>
         </div>
@@ -166,12 +199,6 @@ export default function SingleImage() {
               <Palette colors={anti} danger />
             </div>
           )}
-        </div>
-      )}
-
-      {lockedHex && (
-        <div className="text-center mt-4 p-3 bg-gray-50 rounded-xl">
-          <p className="text-sm text-gray-600">Sampled color: <strong>{lockedHex}</strong> (copied to clipboard)</p>
         </div>
       )}
     </div>
