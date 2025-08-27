@@ -22,9 +22,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          # omit cache because we have no lockfile
 
-      - run: npm ci
+      - run: npm install --no-audit --no-fund
       - run: npm run build
       - run: touch dist/.nojekyll
 
