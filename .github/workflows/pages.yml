@@ -28,12 +28,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm                   # optional but speeds installs
       
       - name: Install dependencies
-        run: npm install
+        run: npm ci                    # more reproducible than npm install
       
       - name: Build
         run: npm run build
+
+      - name: Add .nojekyll to dist     # 👈 NEW STEP (fixes asset handling on Pages)
+        run: touch dist/.nojekyll
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
