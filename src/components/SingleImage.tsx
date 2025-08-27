@@ -62,51 +62,29 @@ export default function SingleImage() {
     const xDisp = e.clientX - rect.left
     const yDisp = e.clientY - rect.top
     
-    // Calculate the actual position within the image (accounting for object-contain scaling)
-    const scaleX = image.naturalWidth / imgEl.clientWidth
-    const scaleY = image.naturalHeight / imgEl.clientHeight
-    const scale = Math.min(scaleX, scaleY)
+    // Simple coordinate transformation - assumes image fills container proportionally
+    const x = Math.floor((xDisp / imgEl.clientWidth) * image.naturalWidth)
+    const y = Math.floor((yDisp / imgEl.clientHeight) * image.naturalHeight)
     
-    // Calculate displayed image dimensions
-    const displayWidth = image.naturalWidth / scale
-    const displayHeight = image.naturalHeight / scale
+    // Clamp to image bounds
+    const clampedX = Math.max(0, Math.min(image.naturalWidth - 1, x))
+    const clampedY = Math.max(0, Math.min(image.naturalHeight - 1, y))
     
-    // Calculate offset to center the image within the img element
-    const offsetX = (imgEl.clientWidth - displayWidth) / 2
-    const offsetY = (imgEl.clientHeight - displayHeight) / 2
-    
-    // Adjust mouse coordinates to image space
-    const adjustedX = xDisp - offsetX
-    const adjustedY = yDisp - offsetY
-    
-    // Check if we're actually over the image
-    if (adjustedX < 0 || adjustedY < 0 || adjustedX > displayWidth || adjustedY > displayHeight) {
-      setIsHovering(false)
-      return
-    }
-    
-    // Convert to actual image coordinates
-    const imageX = Math.floor(adjustedX * scale)
-    const imageY = Math.floor(adjustedY * scale)
-    
-    // Ensure we're within bounds
-    const clampedX = Math.max(0, Math.min(image.naturalWidth - 1, imageX))
-    const clampedY = Math.max(0, Math.min(image.naturalHeight - 1, imageY))
-    
-    // Sample for loupe (15x15 area around cursor)
+    // Update loupe
     const loupeSize = 15
-    const sx = Math.max(0, Math.min(sampleCanvas.current.width - loupeSize, clampedX - Math.floor(loupeSize / 2)))
-    const sy = Math.max(0, Math.min(sampleCanvas.current.height - loupeSize, clampedY - Math.floor(loupeSize / 2)))
+    const sx = Math.max(0, Math.min(image.naturalWidth - loupeSize, clampedX - 7))
+    const sy = Math.max(0, Math.min(image.naturalHeight - loupeSize, clampedY - 7))
 
     const lctx = loupeCanvas.current.getContext('2d', { willReadFrequently: true })!
     lctx.imageSmoothingEnabled = false
     lctx.clearRect(0, 0, 96, 96)
     lctx.drawImage(sampleCanvas.current, sx, sy, loupeSize, loupeSize, 0, 0, 96, 96)
 
-    // Get the exact pixel color
+    // Get exact pixel color
     const sctx = sampleCanvas.current.getContext('2d', { willReadFrequently: true })!
     const pixelData = sctx.getImageData(clampedX, clampedY, 1, 1).data
     const hex = hexOf([pixelData[0], pixelData[1], pixelData[2]])
+    
     setCurrentHex(hex)
     setCurrentRgb([pixelData[0], pixelData[1], pixelData[2]])
     setIsHovering(true)
@@ -124,30 +102,12 @@ export default function SingleImage() {
     const xDisp = e.clientX - rect.left
     const yDisp = e.clientY - rect.top
     
-    // Use the same coordinate transformation as handleMouseMove
-    const scaleX = image.naturalWidth / imgEl.clientWidth
-    const scaleY = image.naturalHeight / imgEl.clientHeight
-    const scale = Math.min(scaleX, scaleY)
+    // Use same coordinate transformation as handleMouseMove
+    const x = Math.floor((xDisp / imgEl.clientWidth) * image.naturalWidth)
+    const y = Math.floor((yDisp / imgEl.clientHeight) * image.naturalHeight)
     
-    const displayWidth = image.naturalWidth / scale
-    const displayHeight = image.naturalHeight / scale
-    
-    const offsetX = (imgEl.clientWidth - displayWidth) / 2
-    const offsetY = (imgEl.clientHeight - displayHeight) / 2
-    
-    const adjustedX = xDisp - offsetX
-    const adjustedY = yDisp - offsetY
-    
-    // Check if click is within the actual image
-    if (adjustedX < 0 || adjustedY < 0 || adjustedX > displayWidth || adjustedY > displayHeight) {
-      return
-    }
-    
-    const imageX = Math.floor(adjustedX * scale)
-    const imageY = Math.floor(adjustedY * scale)
-    
-    const clampedX = Math.max(0, Math.min(image.naturalWidth - 1, imageX))
-    const clampedY = Math.max(0, Math.min(image.naturalHeight - 1, imageY))
+    const clampedX = Math.max(0, Math.min(image.naturalWidth - 1, x))
+    const clampedY = Math.max(0, Math.min(image.naturalHeight - 1, y))
     
     const sctx = sampleCanvas.current.getContext('2d', { willReadFrequently: true })!
     const pixelData = sctx.getImageData(clampedX, clampedY, 1, 1).data
@@ -246,7 +206,7 @@ export default function SingleImage() {
               ref={imgRef} 
               src={imgSrc} 
               alt="preview" 
-              className="max-h-96 max-w-full object-contain rounded-xl shadow-xl cursor-crosshair"
+              className="max-w-full max-h-96 object-contain rounded-xl shadow-xl cursor-crosshair mx-auto block"
               onMouseMove={handleMouseMove} 
               onMouseLeave={handleLeave} 
               onClick={handleClick} 
@@ -284,6 +244,12 @@ export default function SingleImage() {
               <Palette colors={anti} danger />
             </div>
           )}
+        </div>
+      )}
+
+      {lockedColor && (
+        <div className="text-center mt-4 p-3 bg-gray-50 rounded-xl">
+          <p className="text-sm text-gray-600">Sampled color: <strong>{lockedColor.hex}</strong> (copied to clipboard)</p>
         </div>
       )}
     </div>
