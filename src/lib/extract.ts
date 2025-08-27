@@ -1,3 +1,19 @@
+import type { Swatch } from '../types'
+
+function rgbToHex(r: number, g: number, b: number) {
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()
+}
+
+function rgbToHsv(r: number, g: number, b: number): [number, number, number] {
+  r /= 255; g /= 255; b /= 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min
+  let h = d === 0 ? 0 : max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4
+  h = Math.round((h < 0 ? h + 6 : h) * 60)
+  const s = max === 0 ? 0 : d / max
+  const v = max
+  return [h, s, v]
+}
+
 export function extractColorsFromImage(img: HTMLImageElement, k: number): Swatch[] {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!
