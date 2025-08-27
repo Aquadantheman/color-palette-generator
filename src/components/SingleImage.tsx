@@ -46,8 +46,19 @@ export default function SingleImage() {
 
   function generate(k: number) {
     if (!image) return
-    setColors(extractColorsFromImage(image, k))
+    
+    // Clear anti-palette when generating new colors
     setAnti([])
+    
+    // Add some randomization to get different arrangements
+    const allColors = extractColorsFromImage(image, k + 3) // Get extra colors
+    
+    // Randomly select and shuffle the colors
+    const shuffled = allColors
+      .sort(() => Math.random() - 0.5) // Random shuffle
+      .slice(0, k) // Take only the requested number
+    
+    setColors(shuffled)
   }
 
   function buildAnti() {
