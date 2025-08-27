@@ -16,7 +16,7 @@ function rgbToHsv(r: number, g: number, b: number): [number, number, number] {
 
 function colorDistance(c1: [number, number, number], c2: [number, number, number]): number {
   const dr = c1[0] - c2[0]
-  const dg = c1[1] - c2[1] 
+  const dg = c1[1] - c2[1]
   const db = c1[2] - c2[2]
   return Math.sqrt(dr * dr + dg * dg + db * db)
 }
@@ -35,19 +35,15 @@ export function extractColorsFromImage(img: HTMLImageElement, k: number): Swatch
   const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data
   const colors: [number, number, number][] = []
 
-  // Grid-based sampling to ensure we get colors from all regions
+  // Grid-based sampling to cover all regions
   const gridSize = Math.max(8, Math.min(16, Math.floor(Math.sqrt(k * 20))))
-  const stepX = Math.floor(canvas.width / gridSize)
-  const stepY = Math.floor(canvas.height / gridSize)
+  const stepX = Math.max(1, Math.floor(canvas.width / gridSize))   // ✅ ensure >= 1
+  const stepY = Math.max(1, Math.floor(canvas.height / gridSize))  // ✅ ensure >= 1
 
   for (let y = 0; y < canvas.height; y += stepY) {
     for (let x = 0; x < canvas.width; x += stepX) {
       const i = (y * canvas.width + x) * 4
-      const r = data[i]
-      const g = data[i + 1] 
-      const b = data[i + 2]
-      const a = data[i + 3]
-
+      const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3]
       if (a >= 200) {
         const brightness = r + g + b
         if (brightness > 10 && brightness < 760) {
@@ -57,15 +53,11 @@ export function extractColorsFromImage(img: HTMLImageElement, k: number): Swatch
     }
   }
 
-  // Add random sampling to fill gaps
+  // Random sampling to diversify further
   const numRandomSamples = Math.min(colors.length, k * 10)
   for (let i = 0; i < numRandomSamples; i++) {
-    const randomIndex = Math.floor(Math.random() * (data.length / 4)) * 4
-    const r = data[randomIndex]
-    const g = data[randomIndex + 1]
-    const b = data[randomIndex + 2]
-    const a = data[randomIndex + 3]
-
+    const pxIndex = Math.floor(Math.random() * (data.length / 4)) * 4
+    const r = data[pxIndex], g = data[pxIndex + 1], b = data[pxIndex + 2], a = data[pxIndex + 3]
     if (a >= 200) {
       const brightness = r + g + b
       if (brightness > 10 && brightness < 760) {
@@ -76,25 +68,20 @@ export function extractColorsFromImage(img: HTMLImageElement, k: number): Swatch
 
   if (colors.length === 0) return []
 
-  // Diversity-based selection: pick colors that are most different from each other
+  // Diversity selection
   const selectedColors: [number, number, number][] = []
-  
-  // Start with a random color
   selectedColors.push(colors[Math.floor(Math.random() * colors.length)])
 
-  // Iteratively add colors that are most different from existing selections
   while (selectedColors.length < k && selectedColors.length < colors.length) {
     let maxMinDistance = 0
     let bestColor: [number, number, number] | null = null
 
     for (const color of colors) {
-      // Skip if this color is too similar to any already selected color
       let minDistance = Infinity
       for (const selected of selectedColors) {
-        const distance = colorDistance(color, selected)
-        minDistance = Math.min(minDistance, distance)
+        const dist = colorDistance(color, selected)
+        minDistance = Math.min(minDistance, dist)
       }
-
       if (minDistance > 20 && minDistance > maxMinDistance) {
         maxMinDistance = minDistance
         bestColor = color
@@ -104,10 +91,7 @@ export function extractColorsFromImage(img: HTMLImageElement, k: number): Swatch
     if (bestColor) {
       selectedColors.push(bestColor)
     } else {
-      // If no diverse colors found, add a random remaining color
-      const remaining = colors.filter(c => 
-        !selectedColors.some(s => colorDistance(c, s) < 20)
-      )
+      const remaining = colors.filter(c => !selectedColors.some(s => colorDistance(c, s) < 20))
       if (remaining.length > 0) {
         selectedColors.push(remaining[Math.floor(Math.random() * remaining.length)])
       } else {
@@ -116,16 +100,21 @@ export function extractColorsFromImage(img: HTMLImageElement, k: number): Swatch
     }
   }
 
-  // Convert to swatches and sort by hue
-  const swatches: Swatch[] = selectedColors.map(rgb => ({
-    rgb,
-    hex: rgbToHex(rgb[0], rgb[1], rgb[2])
+  // Build swatches and sort by hue
+  const swatches: Swatch[] = selectedColors.map(([r, g, b]) => ({
+    rgb: [r, g, b],
+    hex: rgbToHex(r, g, b),
   }))
 
   swatches.sort((a, b) => {
     const [hA] = rgbToHsv(...a.rgb)
     const [hB] = rgbToHsv(...b.rgb)
     return hA - hB
+  })
+
+  return swatches
+}
+
   })
 
   return swatches
